@@ -21,9 +21,11 @@ export function DrillDownModal({ isOpen, onClose, segmentName, segmentData, colo
   const { downloadChart } = useChartDownload();
   const gradientId = `drillGradient-${segmentName.replace(/[^a-zA-Z0-9]/g, '-')}`;
 
-  const currentValue = segmentData?.find((d) => d.year === 2025)?.value ?? 0;
-  const forecastValue = segmentData?.find((d) => d.year === 2034)?.value ?? 0;
-  const cagr = calculateCAGR(currentValue, forecastValue, 9);
+  const firstYear = segmentData?.[0]?.year ?? 0;
+  const lastYear = segmentData?.[segmentData.length - 1]?.year ?? 0;
+  const currentValue = segmentData?.[0]?.value ?? 0;
+  const forecastValue = segmentData?.[segmentData.length - 1]?.value ?? 0;
+  const cagr = calculateCAGR(currentValue, forecastValue, lastYear - firstYear);
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -58,15 +60,15 @@ export function DrillDownModal({ isOpen, onClose, segmentName, segmentData, colo
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-secondary/30 p-4">
-              <p className="text-xs text-muted-foreground">2025 Market Size</p>
+              <p className="text-xs text-muted-foreground">{firstYear} Market Size</p>
               <p className="text-xl font-bold text-foreground">{useMillions ? `$${currentValue.toLocaleString()}M` : `$${(currentValue / 1000).toFixed(2)}B`}</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-lg border border-border bg-secondary/30 p-4">
-              <p className="text-xs text-muted-foreground">2034 Forecast</p>
+              <p className="text-xs text-muted-foreground">{lastYear} Forecast</p>
               <p className="text-xl font-bold text-foreground">{useMillions ? `$${forecastValue.toLocaleString()}M` : `$${(forecastValue / 1000).toFixed(2)}B`}</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-lg border border-border bg-secondary/30 p-4">
-              <p className="text-xs text-muted-foreground">CAGR through 2034</p>
+              <p className="text-xs text-muted-foreground">CAGR ({firstYear}-{lastYear})</p>
               <div className="flex items-center gap-1">
                 <p className="text-xl font-bold text-chart-4">{cagr.toFixed(1)}%</p>
                 <TrendingUp className="h-4 w-4 text-chart-4" />
