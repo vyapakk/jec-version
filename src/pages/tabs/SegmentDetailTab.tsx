@@ -2,7 +2,7 @@ import { DollarSign, TrendingUp, BarChart3 } from "lucide-react";
 import { KPICard } from "@/components/aircraft-interiors/KPICard";
 import { MarketTrendChart } from "@/components/aircraft-interiors/MarketTrendChart";
 import { SegmentPieChart } from "@/components/aircraft-interiors/SegmentPieChart";
-import { RegionalBarChart } from "@/components/aircraft-interiors/RegionalBarChart";
+
 import { ComparisonTable } from "@/components/aircraft-interiors/ComparisonTable";
 import { DrillDownModal } from "@/components/aircraft-interiors/DrillDownModal";
 import { StackedBarChart } from "@/components/aircraft-interiors/StackedBarChart";
@@ -490,25 +490,27 @@ export function SegmentDetailTab({
       )}
 
       {/* Main Charts Row */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <MarketTrendChart
-            data={totalMarket}
-            segments={segmentData}
-            title={`${title} - Market Trend`}
-            subtitle="Historical and forecast data (US$ Millions) - Click legend to drill down"
-            showSegments
-            onSegmentClick={handleTrendSegmentClick}
-            useMillions={useMillions}
+      {segmentData.length > 0 && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <MarketTrendChart
+              data={totalMarket}
+              segments={segmentData}
+              title={`${title} - Market Trend`}
+              subtitle="Historical and forecast data (US$ Millions) - Click legend to drill down"
+              showSegments
+              onSegmentClick={handleTrendSegmentClick}
+              useMillions={useMillions}
+            />
+          </div>
+          <SegmentPieChart
+            data={segmentData}
+            year={selectedYear}
+            title={title}
+            onSegmentClick={handlePieSegmentClick}
           />
         </div>
-        <SegmentPieChart
-          data={segmentData}
-          year={selectedYear}
-          title={title}
-          onSegmentClick={handlePieSegmentClick}
-        />
-      </div>
+      )}
 
       {/* Region Tab: Country Line Chart */}
       {segmentType === "region" && allCountries.length > 0 && (
@@ -730,13 +732,15 @@ export function SegmentDetailTab({
       )}
 
       {/* Comparison Table */}
-      <ComparisonTable
-        data={segmentData}
-        startYear={2025}
-        endYear={2034}
-        title={`${title} - Growth Analysis`}
-        onRowClick={handleTableRowClick}
-      />
+      {segmentData.length > 0 && (
+        <ComparisonTable
+          data={segmentData}
+          startYear={firstYear}
+          endYear={lastYear}
+          title={`${title} - Growth Analysis`}
+          onRowClick={handleTableRowClick}
+        />
+      )}
 
       {/* Drill-Down Modal */}
       <DrillDownModal
