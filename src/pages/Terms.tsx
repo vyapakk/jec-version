@@ -136,7 +136,7 @@ const Terms = () => {
             <ArrowLeft className="mr-2 h-4 w-4" /> Back
           </Button>
           <h1 className="text-2xl md:text-4xl font-bold text-primary-foreground font-display">
-            Terms &amp; Privacy Policy
+            Terms &amp; Conditions and Privacy Policy
           </h1>
           <p className="mt-2 text-primary-foreground/70 text-sm md:text-base max-w-2xl">
             How we handle &amp; use your information
