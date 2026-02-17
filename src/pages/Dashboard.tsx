@@ -83,8 +83,7 @@ const Dashboard = () => {
               <span>© {new Date().getFullYear()} Stratview Research. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-6">
-              <a href="/terms" className="hover:text-foreground transition-colors">Terms &amp; Conditions</a>
-              <a href="/terms" className="hover:text-foreground transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-foreground transition-colors">Terms &amp; Privacy Policy</a>
               <a href="mailto:support@stratviewresearch.com" className="hover:text-foreground transition-colors">Support</a>
             </div>
           </div>
