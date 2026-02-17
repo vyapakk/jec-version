@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Search, User, Check, X } from "lucide-react";
+import { Bell, Search, User, Check, X, BarChart3, Database, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import stratviewLogo from "@/assets/stratview-logo.png";
+import { categories } from "@/data/datasets";
+import { activeDashboardRoutes } from "@/data/dashboardRoutes";
+
+interface SearchResult {
+  type: "dataset" | "dashboard";
+  name: string;
+  category: string;
+  datasetId: string;
+  dashboardId?: string;
+  purchased?: boolean;
+  route?: string;
+}
 
 interface Notification {
   id: string;
@@ -60,6 +72,67 @@ const DashboardHeader = () => {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Close search dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const searchResults = useMemo<SearchResult[]>(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const results: SearchResult[] = [];
+
+    for (const cat of categories) {
+      for (const ds of cat.datasets) {
+        // Match dataset name
+        if (ds.name.toLowerCase().includes(q)) {
+          results.push({
+            type: "dataset",
+            name: ds.name,
+            category: cat.title,
+            datasetId: ds.id,
+          });
+        }
+        // Match individual dashboards
+        for (const db of ds.dashboards) {
+          if (db.name.toLowerCase().includes(q)) {
+            results.push({
+              type: "dashboard",
+              name: db.name,
+              category: cat.title,
+              datasetId: ds.id,
+              dashboardId: db.id,
+              purchased: db.purchased,
+              route: activeDashboardRoutes[db.id],
+            });
+          }
+        }
+      }
+    }
+    return results.slice(0, 10); // cap at 10 results
+  }, [searchQuery]);
+
+  const handleResultClick = (result: SearchResult) => {
+    setSearchQuery("");
+    setSearchOpen(false);
+    if (result.type === "dataset") {
+      navigate(`/dataset/${result.datasetId}`);
+    } else if (result.purchased && result.route) {
+      navigate(result.route);
+    } else {
+      navigate(`/dataset/${result.datasetId}`);
+    }
+  };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -105,13 +178,59 @@ const DashboardHeader = () => {
         </div>
 
         {/* Search */}
-        <div className="hidden md:flex flex-1 mx-8">
+        <div className="hidden md:flex flex-1 mx-8" ref={searchRef}>
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search datasets, dashboards..."
               className="pl-10 bg-muted/50 border-transparent focus:border-primary/30 focus:bg-card transition-all"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setSearchOpen(true);
+              }}
+              onFocus={() => searchQuery.length >= 2 && setSearchOpen(true)}
             />
+            {searchOpen && searchQuery.length >= 2 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50">
+                {searchResults.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    No results found for "{searchQuery}"
+                  </div>
+                ) : (
+                  <ScrollArea className="max-h-[320px]">
+                    <div className="py-1">
+                      {searchResults.map((result, i) => (
+                        <button
+                          key={`${result.type}-${result.dashboardId || result.datasetId}-${i}`}
+                          onClick={() => handleResultClick(result)}
+                          className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary/50 text-muted-foreground">
+                            {result.type === "dataset" ? (
+                              <Database className="h-4 w-4" />
+                            ) : (
+                              <BarChart3 className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {result.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {result.category} · {result.type === "dataset" ? "Dataset" : "Dashboard"}
+                            </p>
+                          </div>
+                          {result.type === "dashboard" && !result.purchased && (
+                            <Lock className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
