@@ -5,9 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { categories } from "@/data/datasets";
 
-// Mock subscribed dataset IDs - replace with actual user data later
-const subscribedDatasetIds: string[] = ["carbon-fiber", "aircraft-interiors"];
-
 const iconBgStyles: Record<string, string> = {
   teal: "bg-primary text-primary-foreground",
   navy: "bg-secondary text-secondary-foreground",
@@ -18,16 +15,20 @@ const iconBgStyles: Record<string, string> = {
 const SubscriptionsSection = () => {
   const navigate = useNavigate();
 
-  // Get subscribed datasets with their category info
+  // Show datasets that have at least one purchased dashboard
   const subscribedDatasets = categories.flatMap((category) =>
     category.datasets
-      .filter((dataset) => subscribedDatasetIds.includes(dataset.id))
-      .map((dataset) => ({
-        ...dataset,
-        category: category.title,
-        categoryIcon: category.icon,
-        categoryColor: category.color,
-      }))
+      .filter((dataset) => dataset.dashboards.some((d) => d.purchased))
+      .map((dataset) => {
+        const purchasedCount = dataset.dashboards.filter((d) => d.purchased).length;
+        return {
+          ...dataset,
+          category: category.title,
+          categoryIcon: category.icon,
+          categoryColor: category.color,
+          purchasedCount,
+        };
+      })
   );
 
   return (
@@ -75,7 +76,7 @@ const SubscriptionsSection = () => {
                           {dataset.category}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {dataset.dashboards.length} dashboards
+                          {dataset.purchasedCount} of {dataset.dashboards.length} unlocked
                         </span>
                       </div>
                     </div>

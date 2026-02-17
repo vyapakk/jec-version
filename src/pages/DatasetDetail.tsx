@@ -45,7 +45,7 @@ const DatasetDetail = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Find the dataset and its parent category
-  let dataset: { id: string; name: string; purchased?: boolean; dashboards: { id: string; name: string }[] } | undefined;
+  let dataset: { id: string; name: string; dashboards: { id: string; name: string; purchased: boolean }[] } | undefined;
   let parentCategory: (typeof categories)[0] | undefined;
 
   for (const cat of categories) {
@@ -72,7 +72,8 @@ const DatasetDetail = () => {
     );
   }
 
-  const isPurchased = dataset.purchased !== false;
+  const hasAnyPurchased = dataset.dashboards.some((d) => d.purchased);
+  const purchasedCount = dataset.dashboards.filter((d) => d.purchased).length;
   const Icon = parentCategory.icon;
 
   const iconBgStyles: Record<string, string> = {
@@ -82,12 +83,12 @@ const DatasetDetail = () => {
     "teal-dark": "bg-teal-dark text-primary-foreground",
   };
 
-  const handleDashboardClick = (dashboardId: string) => {
-    if (!isPurchased) {
+  const handleDashboardClick = (dashboard: { id: string; purchased: boolean }) => {
+    if (!dashboard.purchased) {
       setDialogOpen(true);
       return;
     }
-    const route = activeDashboardRoutes[dashboardId];
+    const route = activeDashboardRoutes[dashboard.id];
     if (route) {
       navigate(route);
     }
@@ -125,13 +126,13 @@ const DatasetDetail = () => {
                 <Badge variant="secondary" className="bg-primary-foreground/10 text-primary-foreground/80 border-0 text-xs">
                   {parentCategory.title}
                 </Badge>
-                {!isPurchased && (
+                {!hasAnyPurchased && (
                   <Badge variant="secondary" className="bg-destructive/20 text-primary-foreground/90 border-0 text-xs">
                     <Lock className="h-3 w-3 mr-1" /> Not Purchased
                   </Badge>
                 )}
                 <span className="text-xs md:text-sm text-primary-foreground/60">
-                  {dataset.dashboards.length} dashboard{dataset.dashboards.length !== 1 ? "s" : ""}
+                  {purchasedCount} of {dataset.dashboards.length} dashboard{dataset.dashboards.length !== 1 ? "s" : ""} unlocked
                 </span>
               </div>
             </div>
@@ -146,16 +147,17 @@ const DatasetDetail = () => {
             Available Dashboards
           </h2>
           <p className="text-sm text-muted-foreground">
-            {isPurchased
-              ? "Select a dashboard to explore detailed market insights"
+            {hasAnyPurchased
+              ? "Select an unlocked dashboard to explore detailed market insights"
               : "These dashboards are available with this dataset. Submit a request to get access."}
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {dataset.dashboards.map((dashboard, index) => {
-            const isActive = isPurchased && !!activeDashboardRoutes[dashboard.id];
-            const isComingSoon = isPurchased && !activeDashboardRoutes[dashboard.id];
+            const isDashboardPurchased = dashboard.purchased;
+            const isActive = isDashboardPurchased && !!activeDashboardRoutes[dashboard.id];
+            const isComingSoon = isDashboardPurchased && !activeDashboardRoutes[dashboard.id];
             return (
               <motion.div
                 key={dashboard.id}
@@ -165,14 +167,14 @@ const DatasetDetail = () => {
               >
                 <Card
                   onClick={() => {
-                    if (!isPurchased) {
-                      handleDashboardClick(dashboard.id);
+                    if (!isDashboardPurchased) {
+                      handleDashboardClick(dashboard);
                     } else if (isActive) {
                       navigate(activeDashboardRoutes[dashboard.id]);
                     }
                   }}
                   className={`group transition-all duration-300 ${
-                    !isPurchased
+                    !isDashboardPurchased
                       ? "cursor-pointer opacity-75 hover:opacity-100 hover:shadow-card-hover"
                       : isActive
                       ? "cursor-pointer hover:shadow-card-hover hover:border-primary/30"
@@ -186,7 +188,7 @@ const DatasetDetail = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className={`font-medium text-sm md:text-base transition-colors truncate ${
-                          !isPurchased
+                          !isDashboardPurchased
                             ? "text-muted-foreground group-hover:text-foreground"
                             : isActive
                             ? "text-card-foreground group-hover:text-primary"
@@ -195,14 +197,14 @@ const DatasetDetail = () => {
                           {dashboard.name}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {!isPurchased
+                          {!isDashboardPurchased
                             ? "Access required"
                             : isActive
                             ? "Interactive market dashboard"
                             : "Coming soon"}
                         </p>
                       </div>
-                      {!isPurchased ? (
+                      {!isDashboardPurchased ? (
                         <Lock className="h-4 w-4 text-muted-foreground/50 shrink-0" />
                       ) : isActive ? (
                         <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />

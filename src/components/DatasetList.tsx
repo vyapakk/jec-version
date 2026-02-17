@@ -12,8 +12,7 @@ interface Dashboard {
 interface Dataset {
   id: string;
   name: string;
-  purchased?: boolean;
-  dashboards: Dashboard[];
+  dashboards: (Dashboard & { purchased: boolean })[];
 }
 
 interface Category {
@@ -58,7 +57,7 @@ const DatasetList = ({ categories, activeTab }: DatasetListProps) => {
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
       {datasetsWithCategory.map((dataset, index) => {
         const Icon = dataset.categoryIcon;
-        const isLocked = dataset.purchased === false;
+        const isLocked = !dataset.dashboards.some((d) => d.purchased);
         return (
           <Card
             key={dataset.id}
