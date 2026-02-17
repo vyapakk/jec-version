@@ -177,6 +177,23 @@ export const categories = [
     ],
   },
   {
+    id: "prepregs",
+    title: "Prepregs",
+    icon: Layers,
+    color: "teal" as const,
+    description: "Prepreg materials market research covering thermoplastic and thermoset prepregs across industries.",
+    datasets: [
+      {
+        id: "prepregs",
+        name: "Prepregs",
+        purchased: true,
+        dashboards: [
+          { id: "pp-thermoplastic", name: "Thermoplastic Prepreg Market" },
+        ],
+      },
+    ],
+  },
+  {
     id: "others",
     title: "Others",
     icon: MoreHorizontal,
