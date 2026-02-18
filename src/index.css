@@ -338,3 +338,129 @@
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
+
+/* ====================================================
+   Carbon Fiber / Composites Theme
+   Dark graphite with amber-orange accents
+   ==================================================== */
+.composites-theme {
+  --background: 220 15% 5%;
+  --foreground: 40 10% 92%;
+  --card: 220 12% 8%;
+  --card-foreground: 40 10% 92%;
+  --popover: 220 12% 10%;
+  --popover-foreground: 40 10% 92%;
+  --primary: 32 95% 52%;
+  --primary-foreground: 220 15% 5%;
+  --secondary: 220 10% 15%;
+  --secondary-foreground: 40 10% 85%;
+  --muted: 220 10% 12%;
+  --muted-foreground: 220 8% 50%;
+  --accent: 16 85% 55%;
+  --accent-foreground: 220 15% 5%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 40 10% 98%;
+  --border: 220 10% 16%;
+  --input: 220 10% 14%;
+  --ring: 32 95% 52%;
+  --chart-1: 32 95% 52%;
+  --chart-2: 16 85% 55%;
+  --chart-3: 200 70% 50%;
+  --chart-4: 142 60% 45%;
+  --chart-5: 280 65% 55%;
+  --chart-6: 48 90% 55%;
+
+  background: linear-gradient(180deg, hsl(220, 15%, 5%) 0%, hsl(220, 15%, 3%) 100%);
+  min-height: 100vh;
+  font-family: 'Poppins', system-ui, sans-serif;
+}
+
+.composites-theme .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Carbon fiber weave pattern */
+.composites-theme .bg-grid {
+  background-image:
+    linear-gradient(45deg, hsl(220 10% 10% / 0.4) 1px, transparent 1px),
+    linear-gradient(-45deg, hsl(220 10% 10% / 0.4) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Glow effects - amber */
+.composites-theme .glow-primary {
+  box-shadow: 0 0 20px hsl(32 95% 52% / 0.3), 0 0 40px hsl(32 95% 52% / 0.1);
+}
+
+/* Glass card */
+.composites-theme .glass-card {
+  background: linear-gradient(145deg, hsl(220 12% 10% / 0.8) 0%, hsl(220 12% 7% / 0.6) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(220 10% 18% / 0.5);
+}
+
+/* Gradient text */
+.composites-theme .text-gradient-primary {
+  background: linear-gradient(135deg, hsl(32, 95%, 52%) 0%, hsl(16, 85%, 55%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Stat card hover effect */
+.composites-theme .stat-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.composites-theme .stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: linear-gradient(135deg, hsl(32 95% 52% / 0.05) 0%, transparent 50%);
+}
+
+.composites-theme .stat-card:hover::before {
+  opacity: 1;
+}
+
+.composites-theme .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px hsl(220 15% 3% / 0.6), 0 0 0 1px hsl(32 95% 52% / 0.1);
+}
+
+/* Scrollbar */
+.composites-theme ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.composites-theme ::-webkit-scrollbar-track {
+  background: hsl(220, 12%, 7%);
+}
+
+.composites-theme ::-webkit-scrollbar-thumb {
+  background: hsl(220, 10%, 22%);
+  border-radius: 4px;
+}
+
+.composites-theme ::-webkit-scrollbar-thumb:hover {
+  background: hsl(32, 95%, 52%);
+}
+
+/* Pulse glow - amber */
+@keyframes pulse-glow-amber {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(32 95% 52% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(32 95% 52% / 0.5);
+  }
+}
+
+.composites-theme .animate-pulse-glow {
+  animation: pulse-glow-amber 3s ease-in-out infinite;
+}
