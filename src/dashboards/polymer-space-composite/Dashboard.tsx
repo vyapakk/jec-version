@@ -72,8 +72,8 @@ const BMIPrepregDashboard = () => {
 
   return (
     <UnitContext.Provider value={unitConfig}>
-      <div className="composites-theme min-h-screen">
-        <ScrollToTop />
+      <div className="composites-theme min-h-screen relative">
+        <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
         <DashboardHeader title={config.title} subtitle={config.subtitle} />
 
         <main className="container mx-auto px-4 py-8">
