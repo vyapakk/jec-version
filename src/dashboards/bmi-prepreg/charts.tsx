@@ -38,6 +38,7 @@ export function MarketOverviewChart({ data, title, subtitle, useMillions = false
   const chartRef = useRef<HTMLDivElement>(null);
   const { downloadChart } = useChartDownload();
   const [view, setView] = useState<"chart" | "table">("chart");
+  const unit = useUnit();
 
   const chartData = data.map((d, index) => {
     const previousValue = index > 0 ? data[index - 1].value : null;
@@ -150,6 +151,7 @@ export function MarketTrendChart({ data, segments, title, subtitle, showSegments
   const chartRef = useRef<HTMLDivElement>(null);
   const { downloadChart } = useChartDownload();
   const [view, setView] = useState<"chart" | "table">("chart");
+  const unit = useUnit();
 
   const chartData = data.map((d) => {
     const point: Record<string, number> = { year: d.year, total: d.value };
@@ -294,6 +296,7 @@ export function SegmentPieChart({ data, year, title, onSegmentClick }: SegmentPi
   const chartRef = useRef<HTMLDivElement>(null);
   const { downloadChart } = useChartDownload();
   const [view, setView] = useState<"chart" | "table">("chart");
+  const unit = useUnit();
 
   const pieData = data.map((segment, index) => ({
     name: segment.name,
@@ -637,6 +640,7 @@ export function StackedBarChart({ data, year, title, subtitle, segmentColors, se
   const { downloadChart } = useChartDownload();
   const [activeSegment, setActiveSegment] = useState<{ barIndex: number; segmentIndex: number; segmentName: string } | null>(null);
   const [view, setView] = useState<"chart" | "table">("chart");
+  const unit = useUnit();
 
   const chartData = data.map((bar) => {
     const result: Record<string, any> = { name: bar.name, total: bar.total };
