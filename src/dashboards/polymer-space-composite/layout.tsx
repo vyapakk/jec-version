@@ -22,7 +22,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ title = "Market Dashboard", subtitle = "Global Market Research Dashboard" }: DashboardHeaderProps) {
   return (
     <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden border-b border-border bg-card/50 backdrop-blur-sm">
-      <div className="absolute inset-0 bg-grid opacity-80" />
+      <div className="absolute inset-0 bg-grid opacity-30" />
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5" />
       <div className="container relative mx-auto px-4 py-6 md:py-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
