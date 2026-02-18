@@ -341,36 +341,36 @@
 
 /* ====================================================
    Carbon Fiber / Composites Theme
-   Dark graphite with amber-orange accents
+   Authentic carbon fiber texture with metallic accents
    ==================================================== */
 .composites-theme {
-  --background: 220 15% 5%;
-  --foreground: 40 10% 92%;
-  --card: 220 12% 8%;
-  --card-foreground: 40 10% 92%;
-  --popover: 220 12% 10%;
-  --popover-foreground: 40 10% 92%;
-  --primary: 32 95% 52%;
-  --primary-foreground: 220 15% 5%;
-  --secondary: 220 10% 15%;
-  --secondary-foreground: 40 10% 85%;
-  --muted: 220 10% 12%;
-  --muted-foreground: 220 8% 50%;
-  --accent: 16 85% 55%;
-  --accent-foreground: 220 15% 5%;
+  --background: 0 0% 4%;
+  --foreground: 0 0% 90%;
+  --card: 0 0% 7%;
+  --card-foreground: 0 0% 90%;
+  --popover: 0 0% 9%;
+  --popover-foreground: 0 0% 90%;
+  --primary: 45 100% 50%;
+  --primary-foreground: 0 0% 4%;
+  --secondary: 0 0% 13%;
+  --secondary-foreground: 0 0% 80%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 48%;
+  --accent: 30 90% 50%;
+  --accent-foreground: 0 0% 4%;
   --destructive: 0 72% 51%;
-  --destructive-foreground: 40 10% 98%;
-  --border: 220 10% 16%;
-  --input: 220 10% 14%;
-  --ring: 32 95% 52%;
-  --chart-1: 32 95% 52%;
-  --chart-2: 16 85% 55%;
-  --chart-3: 200 70% 50%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 15%;
+  --input: 0 0% 12%;
+  --ring: 45 100% 50%;
+  --chart-1: 45 100% 50%;
+  --chart-2: 30 90% 50%;
+  --chart-3: 200 65% 52%;
   --chart-4: 142 60% 45%;
-  --chart-5: 280 65% 55%;
-  --chart-6: 48 90% 55%;
+  --chart-5: 280 60% 55%;
+  --chart-6: 0 0% 65%;
 
-  background: linear-gradient(180deg, hsl(220, 15%, 5%) 0%, hsl(220, 15%, 3%) 100%);
+  background: hsl(0, 0%, 4%);
   min-height: 100vh;
   font-family: 'Poppins', system-ui, sans-serif;
 }
@@ -379,29 +379,56 @@
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Carbon fiber weave pattern */
+/* Carbon fiber weave texture */
 .composites-theme .bg-grid {
+  background-color: hsl(0, 0%, 6%);
   background-image:
-    linear-gradient(45deg, hsl(220 10% 10% / 0.4) 1px, transparent 1px),
-    linear-gradient(-45deg, hsl(220 10% 10% / 0.4) 1px, transparent 1px);
-  background-size: 20px 20px;
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 7px,
+      hsl(0 0% 9% / 0.8) 7px,
+      hsl(0 0% 9% / 0.8) 8px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 7px,
+      hsl(0 0% 9% / 0.8) 7px,
+      hsl(0 0% 9% / 0.8) 8px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      hsl(0 0% 5% / 0.6),
+      hsl(0 0% 5% / 0.6) 2px,
+      hsl(0 0% 8% / 0.6) 2px,
+      hsl(0 0% 8% / 0.6) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      hsl(0 0% 5% / 0.4),
+      hsl(0 0% 5% / 0.4) 2px,
+      hsl(0 0% 8% / 0.4) 2px,
+      hsl(0 0% 8% / 0.4) 4px
+    );
+  background-size: 8px 8px;
 }
 
-/* Glow effects - amber */
+/* Glow effects - gold */
 .composites-theme .glow-primary {
-  box-shadow: 0 0 20px hsl(32 95% 52% / 0.3), 0 0 40px hsl(32 95% 52% / 0.1);
+  box-shadow: 0 0 20px hsl(45 100% 50% / 0.3), 0 0 40px hsl(45 100% 50% / 0.1);
 }
 
-/* Glass card */
+/* Glass card - carbon fiber style with subtle sheen */
 .composites-theme .glass-card {
-  background: linear-gradient(145deg, hsl(220 12% 10% / 0.8) 0%, hsl(220 12% 7% / 0.6) 100%);
+  background: linear-gradient(145deg, hsl(0 0% 9% / 0.9) 0%, hsl(0 0% 6% / 0.7) 100%);
   backdrop-filter: blur(12px);
-  border: 1px solid hsl(220 10% 18% / 0.5);
+  border: 1px solid hsl(0 0% 18% / 0.5);
 }
 
-/* Gradient text */
+/* Gradient text - gold shimmer */
 .composites-theme .text-gradient-primary {
-  background: linear-gradient(135deg, hsl(32, 95%, 52%) 0%, hsl(16, 85%, 55%) 100%);
+  background: linear-gradient(135deg, hsl(45, 100%, 50%) 0%, hsl(30, 90%, 50%) 50%, hsl(45, 100%, 60%) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -420,7 +447,7 @@
   inset: 0;
   opacity: 0;
   transition: opacity 0.3s;
-  background: linear-gradient(135deg, hsl(32 95% 52% / 0.05) 0%, transparent 50%);
+  background: linear-gradient(135deg, hsl(45 100% 50% / 0.04) 0%, transparent 50%);
 }
 
 .composites-theme .stat-card:hover::before {
@@ -429,7 +456,7 @@
 
 .composites-theme .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px hsl(220 15% 3% / 0.6), 0 0 0 1px hsl(32 95% 52% / 0.1);
+  box-shadow: 0 8px 32px hsl(0 0% 2% / 0.7), 0 0 0 1px hsl(45 100% 50% / 0.1);
 }
 
 /* Scrollbar */
@@ -439,28 +466,28 @@
 }
 
 .composites-theme ::-webkit-scrollbar-track {
-  background: hsl(220, 12%, 7%);
+  background: hsl(0, 0%, 6%);
 }
 
 .composites-theme ::-webkit-scrollbar-thumb {
-  background: hsl(220, 10%, 22%);
+  background: hsl(0, 0%, 20%);
   border-radius: 4px;
 }
 
 .composites-theme ::-webkit-scrollbar-thumb:hover {
-  background: hsl(32, 95%, 52%);
+  background: hsl(45, 100%, 50%);
 }
 
-/* Pulse glow - amber */
-@keyframes pulse-glow-amber {
+/* Pulse glow - gold */
+@keyframes pulse-glow-carbon {
   0%, 100% {
-    box-shadow: 0 0 20px hsl(32 95% 52% / 0.3);
+    box-shadow: 0 0 20px hsl(45 100% 50% / 0.3);
   }
   50% {
-    box-shadow: 0 0 40px hsl(32 95% 52% / 0.5);
+    box-shadow: 0 0 40px hsl(45 100% 50% / 0.5);
   }
 }
 
 .composites-theme .animate-pulse-glow {
-  animation: pulse-glow-amber 3s ease-in-out infinite;
+  animation: pulse-glow-carbon 3s ease-in-out infinite;
 }
