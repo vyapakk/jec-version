@@ -184,7 +184,10 @@ export function useChartDownload() {
   const downloadChart = useCallback(async (ref: React.RefObject<HTMLDivElement>, filename: string) => {
     if (!ref.current) return;
     try {
-      const chartDataUrl = await toPng(ref.current, { backgroundColor: BG_COLOR, quality: 1, pixelRatio: 3 });
+      const filter = (node: HTMLElement) => {
+        return !node?.hasAttribute?.("data-download-exclude");
+      };
+      const chartDataUrl = await toPng(ref.current, { backgroundColor: BG_COLOR, quality: 1, pixelRatio: 3, filter });
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
@@ -196,11 +199,13 @@ export function useChartDownload() {
       const chartImg = new Image();
       chartImg.src = chartDataUrl;
       await new Promise((resolve) => { chartImg.onload = resolve; });
-      const chartAreaHeight = EXPORT_HEIGHT - FOOTER_HEIGHT;
-      const scale = Math.min(EXPORT_WIDTH / chartImg.width, chartAreaHeight / chartImg.height);
+      const padding = 40;
+      const chartAreaWidth = EXPORT_WIDTH - padding * 2;
+      const chartAreaHeight = EXPORT_HEIGHT - FOOTER_HEIGHT - padding * 2;
+      const scale = Math.min(chartAreaWidth / chartImg.width, chartAreaHeight / chartImg.height);
       const drawW = chartImg.width * scale;
       const drawH = chartImg.height * scale;
-      ctx.drawImage(chartImg, (EXPORT_WIDTH - drawW) / 2, (chartAreaHeight - drawH) / 2, drawW, drawH);
+      ctx.drawImage(chartImg, (EXPORT_WIDTH - drawW) / 2, padding + (chartAreaHeight - drawH) / 2, drawW, drawH);
 
       ctx.fillStyle = "rgba(255,255,255,0.05)";
       ctx.fillRect(0, EXPORT_HEIGHT - FOOTER_HEIGHT, EXPORT_WIDTH, FOOTER_HEIGHT);

@@ -110,7 +110,7 @@ export function KPICard({ title, value, prefix = "$", suffix = "B", decimals = 1
 
 export function ChartDownloadButton({ onClick, className }: { onClick: () => void; className?: string }) {
   return (
-    <Button variant="ghost" size="icon" onClick={onClick}
+    <Button variant="ghost" size="icon" onClick={onClick} data-download-exclude
       className={`h-8 w-8 text-muted-foreground hover:text-foreground ${className}`} title="Download chart as PNG">
       <Download className="h-4 w-4" />
     </Button>
@@ -121,7 +121,7 @@ export function ChartDownloadButton({ onClick, className }: { onClick: () => voi
 
 export function ChartTableViewToggle({ view, onViewChange }: { view: "chart" | "table"; onViewChange: (view: "chart" | "table") => void }) {
   return (
-    <div className="flex items-center rounded-lg border border-border bg-secondary/50 p-0.5">
+    <div className="flex items-center rounded-lg border border-border bg-secondary/50 p-0.5" data-download-exclude>
       <Button variant="ghost" size="icon" onClick={() => onViewChange("chart")}
         className={`h-7 w-7 ${view === "chart" ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`} title="Chart view">
         <BarChart3 className="h-3.5 w-3.5" />
