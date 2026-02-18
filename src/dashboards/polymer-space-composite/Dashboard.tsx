@@ -72,7 +72,7 @@ const BMIPrepregDashboard = () => {
 
   return (
     <UnitContext.Provider value={unitConfig}>
-      <div className="aircraft-interiors-theme min-h-screen">
+      <div className="composites-theme min-h-screen">
         <ScrollToTop />
         <DashboardHeader title={config.title} subtitle={config.subtitle} />
 
