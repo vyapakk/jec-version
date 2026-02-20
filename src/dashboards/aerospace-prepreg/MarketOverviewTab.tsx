@@ -68,6 +68,7 @@ export function MarketOverviewTab({ marketData, selectedYear, onNavigateToTab }:
           onDonutClick={onNavigateToTab}
           onSliceClick={handleSliceClick}
           endUserLabel={labels.endUser}
+          aircraftLabel={config.segmentMapping.aircraft?.title ?? "Aircraft Type"}
           equipmentLabel={labels.equipment}
           processTypeLabel={labels.processType}
           applicationLabel={labels.application}
