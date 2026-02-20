@@ -20,7 +20,8 @@ interface SegmentDetailTabProps {
 
 export function SegmentDetailTab({ segmentType, segmentData, totalMarket, marketData, title, selectedYear }: SegmentDetailTabProps) {
   const { drillDownState, openDrillDown, closeDrillDown } = useDrillDown();
-  const { useMillions, labels } = config;
+  const { useMillions, labels, segmentMapping } = config;
+  const aircraftLabel = segmentMapping.aircraft?.title ?? "Aircraft Type";
 
   const currentYearTotal = segmentData.reduce((sum, seg) => sum + (seg.data.find((d) => d.year === selectedYear)?.value ?? 0), 0);
   const firstYear = marketData.years[0];
@@ -160,9 +161,9 @@ export function SegmentDetailTab({ segmentType, segmentData, totalMarket, market
   const getRelatedSegmentsForDrillDown = (segmentName: string) => {
     if (segmentType === "region" && marketData.countryDataByRegion[segmentName])
       return { title: `Countries in ${segmentName}`, data: marketData.countryDataByRegion[segmentName] };
-    if (segmentType === "aircraft") return { title: "Applications for this Aircraft Type", data: marketData.application };
-    if (segmentType === "endUser") return { title: "Regions for this End User", data: marketData.region };
-    if (segmentType === "application") return { title: "Aircraft Types by Application", data: marketData.aircraftType };
+    if (segmentType === "aircraft") return { title: `${labels.application} for this ${aircraftLabel}`, data: marketData.application };
+    if (segmentType === "endUser") return { title: `Regions for this ${labels.endUser}`, data: marketData.region };
+    if (segmentType === "application") return { title: `${aircraftLabel} by ${labels.application}`, data: marketData.aircraftType };
     if (segmentType === "equipment") {
       let rd = marketData.equipmentByRegion?.[segmentName];
       if (!rd) { const sn = segmentName.includes("BFE") ? "BFE" : segmentName.includes("SFE") ? "SFE" : segmentName; rd = marketData.equipmentByRegion?.[sn]; }
@@ -224,7 +225,7 @@ export function SegmentDetailTab({ segmentType, segmentData, totalMarket, market
       {segmentType === "endUser" && (
         <>
           {aircraftTypeStackedData.length > 0 && aircraftTypeStackedData.some(d => d.total > 0) && (
-            <StackedBarChart data={aircraftTypeStackedData} year={selectedYear} title={`OE vs Aftermarket by Aircraft Type`}
+            <StackedBarChart data={aircraftTypeStackedData} year={selectedYear} title={`${labels.endUser} by ${aircraftLabel}`}
               subtitle={`${selectedYear} breakdown`} segmentColors={CHART_COLORS} segmentNames={aircraftTypeNames} onSegmentClick={handleStackedBarClick} useMillions={useMillions} />
           )}
           {regionStackedDataForEndUser.length > 0 && regionStackedDataForEndUser.some(d => d.total > 0) && (
@@ -237,11 +238,11 @@ export function SegmentDetailTab({ segmentType, segmentData, totalMarket, market
       {segmentType === "aircraft" && (
         <>
           {aircraftByRegionData.length > 0 && aircraftByRegionData.some(d => d.total > 0) && (
-            <StackedBarChart data={aircraftByRegionData} year={selectedYear} title="Aircraft Type by Region" subtitle={`${selectedYear} breakdown`}
+            <StackedBarChart data={aircraftByRegionData} year={selectedYear} title={`${aircraftLabel} by Region`} subtitle={`${selectedYear} breakdown`}
               segmentColors={CHART_COLORS} segmentNames={regionNames} onSegmentClick={handleStackedBarClick} useMillions={useMillions} />
           )}
           {aircraftByEndUserData.length > 0 && aircraftByEndUserData.some(d => d.total > 0) && (
-            <StackedBarChart data={aircraftByEndUserData} year={selectedYear} title={`Aircraft Type by ${labels.endUser}`} subtitle={`${selectedYear} breakdown`}
+            <StackedBarChart data={aircraftByEndUserData} year={selectedYear} title={`${aircraftLabel} by ${labels.endUser}`} subtitle={`${selectedYear} breakdown`}
               segmentColors={CHART_COLORS} segmentNames={endUserNames} onSegmentClick={handleStackedBarClick} useMillions={useMillions} />
           )}
         </>
@@ -250,7 +251,7 @@ export function SegmentDetailTab({ segmentType, segmentData, totalMarket, market
       {segmentType === "region" && (
         <>
           {regionByAircraftData.length > 0 && regionByAircraftData.some(d => d.total > 0) && (
-            <StackedBarChart data={regionByAircraftData} year={selectedYear} title="Region by Aircraft Type" subtitle={`${selectedYear} breakdown`}
+            <StackedBarChart data={regionByAircraftData} year={selectedYear} title={`Region by ${aircraftLabel}`} subtitle={`${selectedYear} breakdown`}
               segmentColors={CHART_COLORS} segmentNames={aircraftTypeNames} onSegmentClick={handleStackedBarClick} useMillions={useMillions} />
           )}
           {regionByApplicationData.length > 0 && regionByApplicationData.some(d => d.total > 0) && (
