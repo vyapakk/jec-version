@@ -158,21 +158,6 @@ const baseCategories = [
     ],
   },
   {
-    id: "prepregs",
-    title: "Prepregs",
-    icon: Layers,
-    color: "teal" as const,
-    description: "Prepreg materials market research covering thermoplastic and thermoset prepregs across industries.",
-    datasets: [
-      {
-        id: "prepregs",
-        name: "Prepregs",
-        dashboards: [] as { id: string; name: string; purchased: boolean }[],
-        // ↑ Real dashboards auto-merged from registry
-      },
-    ],
-  },
-  {
     id: "others",
     title: "Others",
     icon: MoreHorizontal,

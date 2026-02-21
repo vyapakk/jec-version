@@ -34,5 +34,5 @@ export const config = {
     process:     { dataKey: "processType",        title: "Curing Type" },
   } as Record<string, { dataKey: string; title: string }>,
   routePath: "/dashboard/aerospace-prepreg",
-  catalog: { categoryId: "prepregs", datasetId: "prepregs", dashboardId: "pp-aerospace" },
+  catalog: { categoryId: "composites", datasetId: "prepregs", dashboardId: "pp-aerospace", datasetName: "Prepregs" },
 } as const;
