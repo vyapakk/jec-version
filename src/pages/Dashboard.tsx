@@ -13,7 +13,6 @@ const tabs = [
   { id: "aerospace-defense", label: "Aerospace & Defense" },
   { id: "automotive-transport", label: "Automotive & Transport" },
   { id: "building-construction", label: "Building & Construction" },
-  { id: "prepregs", label: "Prepregs" },
   { id: "others", label: "Others" },
 ];
 
