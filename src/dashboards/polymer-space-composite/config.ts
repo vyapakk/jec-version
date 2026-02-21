@@ -34,5 +34,5 @@ export const config = {
     equipment:   { dataKey: "furnishedEquipment", title: "Component" },
   } as Record<string, { dataKey: string; title: string }>,
   routePath: "/dashboard/polymer-space-composite",
-  catalog: { categoryId: "prepregs", datasetId: "prepregs", dashboardId: "pp-pscm" },
+  catalog: { categoryId: "composites", datasetId: "prepregs", dashboardId: "pp-pscm", datasetName: "Prepregs" },
 } as const;

@@ -36,5 +36,5 @@ export const config = {
     process:     { dataKey: "processType",        title: "Process Type" },
   } as Record<string, { dataKey: string; title: string }>,
   routePath: "/dashboard/thermoplastic-prepreg",
-  catalog: { categoryId: "prepregs", datasetId: "prepregs", dashboardId: "pp-thermoplastic" },
+  catalog: { categoryId: "composites", datasetId: "prepregs", dashboardId: "pp-thermoplastic", datasetName: "Prepregs" },
 } as const;

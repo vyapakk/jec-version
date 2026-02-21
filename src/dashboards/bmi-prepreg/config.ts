@@ -34,5 +34,5 @@ export const config = {
     equipment:   { dataKey: "furnishedEquipment", title: "Curing Type" },
   } as Record<string, { dataKey: string; title: string }>,
   routePath: "/dashboard/bmi-prepreg",
-  catalog: { categoryId: "prepregs", datasetId: "prepregs", dashboardId: "pp-bmi" },
+  catalog: { categoryId: "composites", datasetId: "prepregs", dashboardId: "pp-bmi", datasetName: "Prepregs" },
 } as const;
