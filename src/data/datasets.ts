@@ -79,6 +79,11 @@ const baseCategories = [
         // ↑ Real dashboards auto-merged from registry
       },
       {
+        id: "aircraft-orders-deliveries",
+        name: "Aircraft Orders & Deliveries",
+        dashboards: [] as { id: string; name: string; purchased: boolean }[],
+      },
+      {
         id: "commercial-aircraft",
         name: "Commercial Aircraft",
         dashboards: [
