@@ -77,19 +77,46 @@ function parseExcelData(arrayBuffer: ArrayBuffer): BoeingDeliveryData {
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rawData = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
 
+  // Dynamically find column names (handles minor naming differences)
+  const sampleKeys = rawData.length > 0 ? Object.keys(rawData[0]) : [];
+  const findCol = (patterns: string[]) => {
+    for (const p of patterns) {
+      const found = sampleKeys.find(k => k.trim().toLowerCase() === p.toLowerCase());
+      if (found) return found;
+    }
+    // Fallback: partial match
+    for (const p of patterns) {
+      const found = sampleKeys.find(k => k.trim().toLowerCase().includes(p.toLowerCase()));
+      if (found) return found;
+    }
+    return patterns[0]; // default
+  };
+
+  const COL_YEAR = findCol(["Delivery Year", "Year"]);
+  const COL_TOTAL = findCol(["Delivery Total", "Total", "Quantity"]);
+  const COL_CUSTOMER = findCol(["Customer Name", "Customer"]);
+  const COL_COUNTRY = findCol(["Country"]);
+  const COL_ENGINE = findCol(["Engine"]);
+  const COL_MODEL = findCol(["Model Series", "Model"]);
+  const COL_REGION = findCol(["Region"]);
+
+  console.info("[Boeing Deliveries] Columns found:", { COL_YEAR, COL_TOTAL, COL_CUSTOMER, COL_COUNTRY, COL_ENGINE, COL_MODEL, COL_REGION });
+  console.info("[Boeing Deliveries] Available keys:", sampleKeys);
+  console.info("[Boeing Deliveries] Total raw rows:", rawData.length);
+
   const deliveries: DeliveryRecord[] = rawData
-    .filter((row) => row["Delivery Year"] && row["Delivery Total"])
+    .filter((row) => row[COL_YEAR] && row[COL_TOTAL])
     .map((row) => {
-      const model = String(row["Model Series"] || "").trim();
+      const model = String(row[COL_MODEL] || "").trim();
       return {
-        customer: String(row["Customer Name"] || "").trim(),
-        country: String(row["Country"] || "").trim(),
-        engine: String(row["Engine"] || "").trim(),
+        customer: String(row[COL_CUSTOMER] || "").trim(),
+        country: String(row[COL_COUNTRY] || "").trim(),
+        engine: String(row[COL_ENGINE] || "").trim(),
         model,
         modelFamily: getModelFamily(model),
-        year: parseInt(String(row["Delivery Year"])) || 0,
-        region: String(row["Region"] || "Unidentified").trim(),
-        quantity: parseInt(String(row["Delivery Total"])) || 0,
+        year: parseInt(String(row[COL_YEAR])) || 0,
+        region: String(row[COL_REGION] || "Unidentified").trim(),
+        quantity: parseInt(String(row[COL_TOTAL])) || 0,
       };
     })
     .filter((o) => o.year > 0 && o.quantity > 0);
