@@ -115,7 +115,7 @@ function parseExcelData(arrayBuffer: ArrayBuffer): BoeingDeliveryData {
         model,
         modelFamily: getModelFamily(model),
         year: parseInt(String(row[COL_YEAR])) || 0,
-        region: String(row[COL_REGION] || "Unidentified").trim(),
+        region: String(row[COL_REGION] || "Undisclosed").trim().replace(/^Unidentified$/i, "Undisclosed"),
         quantity: parseInt(String(row[COL_TOTAL])) || 0,
       };
     })
