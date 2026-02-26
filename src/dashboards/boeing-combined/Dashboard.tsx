@@ -1,11 +1,10 @@
 /**
  * Main Dashboard — Boeing Commercial Aircraft Orders & Deliveries.
  * Tabbed layout: Overview | Gross Orders | Deliveries | Pending Orders.
- * Each sub-tab renders the existing standalone dashboard content.
+ * Each sub-tab renders the existing dashboard content with headers/footers hidden.
  */
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,13 +12,25 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { config } from "./config";
 import { useCombinedData } from "./data";
-import { DashboardHeader, DashboardSkeleton, ScrollToTop } from "./layout";
+import { DashboardHeader, ScrollToTop } from "./layout";
 import { OverviewTabContent, OverviewTabLoading, OverviewTabError } from "./OverviewTab";
 
 // Import existing dashboards as tab content
 import BoeingGrossOrdersDashboard from "@/dashboards/boeing-gross-orders/Dashboard";
 import BoeingDeliveriesDashboard from "@/dashboards/boeing-deliveries/Dashboard";
 import BoeingUnfulfilledOrdersDashboard from "@/dashboards/boeing-unfulfilled-orders/Dashboard";
+
+/**
+ * CSS to strip embedded dashboard chrome (header, back-button row, footer)
+ * so each tab renders only its core content within the combined shell.
+ */
+const embedStyles = `
+  .boeing-tab-embed > div { min-height: auto !important; }
+  .boeing-tab-embed header { display: none !important; }
+  .boeing-tab-embed footer { display: none !important; }
+  .boeing-tab-embed > div > main > div:first-child { display: none !important; }
+  .boeing-tab-embed > div > main { padding-top: 0 !important; }
+`;
 
 const BoeingCombinedDashboard = () => {
   const navigate = useNavigate();
@@ -28,6 +39,7 @@ const BoeingCombinedDashboard = () => {
 
   return (
     <div className="aircraft-interiors-theme min-h-screen bg-background text-foreground">
+      <style>{embedStyles}</style>
       <ScrollToTop />
       <DashboardHeader title={config.title} subtitle={config.subtitle} />
 
@@ -67,15 +79,21 @@ const BoeingCombinedDashboard = () => {
           </TabsContent>
 
           <TabsContent value="gross-orders">
-            <BoeingGrossOrdersDashboard />
+            <div className="boeing-tab-embed">
+              <BoeingGrossOrdersDashboard />
+            </div>
           </TabsContent>
 
           <TabsContent value="deliveries">
-            <BoeingDeliveriesDashboard />
+            <div className="boeing-tab-embed">
+              <BoeingDeliveriesDashboard />
+            </div>
           </TabsContent>
 
           <TabsContent value="pending-orders">
-            <BoeingUnfulfilledOrdersDashboard />
+            <div className="boeing-tab-embed">
+              <BoeingUnfulfilledOrdersDashboard />
+            </div>
           </TabsContent>
         </Tabs>
       </main>
