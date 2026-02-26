@@ -172,7 +172,7 @@ const BoeingUnfulfilledOrdersDashboard = () => {
 
         {/* Customer Detail Modal */}
         <Dialog open={!!selectedCustomer} onOpenChange={(open) => { if (!open) setSelectedCustomer(null); }}>
-          <DialogContent className="aircraft-interiors-theme max-w-2xl bg-card border-border overflow-y-auto">
+          <DialogContent className="aircraft-interiors-theme max-w-lg bg-card border-border overflow-y-auto !grid-rows-[auto_1fr] max-h-[90vh]">
             {selectedCustomer && (
               <>
                 <DialogHeader>
