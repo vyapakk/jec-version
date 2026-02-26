@@ -44,7 +44,7 @@ const BoeingCombinedDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview">
-            {isLoading ? <OverviewTabLoading /> : error || !data ? <OverviewTabError error={error || "Unable to load data"} onRetry={refetch} /> : <OverviewTabContent data={data} />}
+            {isLoading ? <OverviewTabLoading /> : error || !data ? <OverviewTabError error={error || "Unable to load data"} onRetry={refetch} /> : <OverviewTabContent data={data} onTabChange={setActiveTab} />}
           </TabsContent>
           <TabsContent value="gross-orders"><GrossOrdersTab /></TabsContent>
           <TabsContent value="deliveries"><DeliveriesTab /></TabsContent>

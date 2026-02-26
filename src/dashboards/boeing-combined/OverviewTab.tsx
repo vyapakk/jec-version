@@ -16,16 +16,23 @@ import AppFooter from "./AppFooter";
 
 interface OverviewTabProps {
   data: CombinedOverviewData;
+  onTabChange?: (tab: string) => void;
 }
 
-export function OverviewTabContent({ data }: OverviewTabProps) {
+export function OverviewTabContent({ data, onTabChange }: OverviewTabProps) {
   return (
     <div className="py-8">
       {/* KPI Cards */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KPICard title="Total Lifetime Orders" value={data.totalLifetimeOrders} icon={Plane} accentColor="primary" delay={0.1} />
-        <KPICard title="Total Lifetime Deliveries" value={data.totalLifetimeDeliveries} icon={TrendingUp} accentColor="accent" delay={0.2} />
-        <KPICard title="Total Pending Orders" value={data.totalPendingOrders} icon={Clock} accentColor="chart-4" delay={0.3} />
+        <div className="cursor-pointer" onClick={() => onTabChange?.("gross-orders")}>
+          <KPICard title="Total Lifetime Orders" value={data.totalLifetimeOrders} icon={Plane} accentColor="primary" delay={0.1} />
+        </div>
+        <div className="cursor-pointer" onClick={() => onTabChange?.("deliveries")}>
+          <KPICard title="Total Lifetime Deliveries" value={data.totalLifetimeDeliveries} icon={TrendingUp} accentColor="accent" delay={0.2} />
+        </div>
+        <div className="cursor-pointer" onClick={() => onTabChange?.("pending-orders")}>
+          <KPICard title="Total Pending Orders" value={data.totalPendingOrders} icon={Clock} accentColor="chart-4" delay={0.3} />
+        </div>
       </div>
 
       {/* Orders vs Deliveries Line Chart */}
