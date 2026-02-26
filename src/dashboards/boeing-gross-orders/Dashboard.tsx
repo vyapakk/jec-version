@@ -116,12 +116,14 @@ const BoeingGrossOrdersDashboard = () => {
           <OrderTrendLineChart data={data.ordersByYear} years={data.years} title="Gross Order Trends" subtitle="Total Boeing gross orders over time" />
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="mb-8">
           <MultiLineChart
             data={data.ordersByYearByModelFamily} years={data.years}
             title="Gross Orders by Aircraft Model" subtitle="Order trends by model family"
             segments={data.modelFamilies} onSegmentClick={openDrillDown}
           />
+        </div>
+        <div className="mb-8">
           <MultiLineChart
             data={data.ordersByYearByRegion} years={data.years}
             title="Gross Orders by Region" subtitle="Order trends by geographic region"
@@ -207,7 +209,7 @@ const BoeingGrossOrdersDashboard = () => {
 
         {/* Customer Detail Modal */}
         <Dialog open={!!selectedCustomer} onOpenChange={(open) => { if (!open) setSelectedCustomer(null); }}>
-          <DialogContent className="max-w-2xl bg-card border-border max-h-[80vh] overflow-y-auto">
+          <DialogContent className="aircraft-interiors-theme max-w-2xl bg-card border-border max-h-[80vh] overflow-y-auto">
             {selectedCustomer && (
               <>
                 <DialogHeader>
@@ -242,10 +244,10 @@ const BoeingGrossOrdersDashboard = () => {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-2">Order History</p>
-                    <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+                    <div className="overflow-x-auto max-h-[300px] overflow-y-auto relative">
                       <table className="w-full">
-                        <thead className="sticky top-0">
-                          <tr className="border-b border-border bg-secondary/30">
+                        <thead className="sticky top-0 z-10">
+                          <tr className="border-b border-border bg-card">
                             <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Year</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Month</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Model</th>

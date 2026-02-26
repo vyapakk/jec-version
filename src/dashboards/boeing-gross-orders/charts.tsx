@@ -312,7 +312,7 @@ export function DrillDownModal({ state, years, onClose }: DrillDownModalProps) {
 
   return (
     <Dialog open={state.isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-3xl bg-card border-border">
+      <DialogContent className="aircraft-interiors-theme max-w-3xl bg-card border-border text-foreground">
         <DialogHeader>
           <DialogTitle className="text-foreground flex items-center gap-2">
             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: state.color }} />
