@@ -172,14 +172,14 @@ const BoeingUnfulfilledOrdersDashboard = () => {
 
         {/* Customer Detail Modal */}
         <Dialog open={!!selectedCustomer} onOpenChange={(open) => { if (!open) setSelectedCustomer(null); }}>
-          <DialogContent className="aircraft-interiors-theme max-w-2xl bg-card border-border max-h-[80vh] overflow-y-auto">
+          <DialogContent className="aircraft-interiors-theme max-w-2xl bg-card border-border overflow-y-auto">
             {selectedCustomer && (
               <>
                 <DialogHeader>
                   <DialogTitle className="text-foreground">{selectedCustomer.name}</DialogTitle>
                 </DialogHeader>
-                <div className="mt-4 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="mt-2 space-y-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="rounded-lg bg-secondary/30 p-3">
                       <p className="text-xs text-muted-foreground">Country</p>
                       <p className="text-sm font-medium text-foreground">{selectedCustomer.country}</p>
@@ -188,8 +188,8 @@ const BoeingUnfulfilledOrdersDashboard = () => {
                       <p className="text-xs text-muted-foreground">Region</p>
                       <p className="text-sm font-medium text-foreground">{selectedCustomer.region}</p>
                     </div>
-                    <div className="rounded-lg bg-secondary/30 p-3 col-span-2">
-                      <p className="text-xs text-muted-foreground">Total Unfulfilled Orders</p>
+                    <div className="rounded-lg bg-secondary/30 p-3">
+                      <p className="text-xs text-muted-foreground">Total Pending Orders</p>
                       <p className="text-lg font-bold text-foreground">{selectedCustomer.totalUnfulfilled.toLocaleString()}</p>
                     </div>
                   </div>
@@ -210,8 +210,8 @@ const BoeingUnfulfilledOrdersDashboard = () => {
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-2">Order Breakdown</p>
-                    <div className="overflow-x-auto max-h-[300px] overflow-y-auto relative">
+                    <p className="text-xs text-muted-foreground mb-2">Pending Order Breakdown</p>
+                    <div className="overflow-x-auto relative">
                       <table className="w-full">
                         <thead className="sticky top-0 z-10">
                           <tr className="border-b border-border bg-card">
