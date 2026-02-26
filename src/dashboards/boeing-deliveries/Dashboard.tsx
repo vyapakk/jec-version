@@ -90,7 +90,7 @@ const BoeingDeliveriesDashboard = () => {
   const displayedCustomers = showAllCustomers ? filteredCustomers : filteredCustomers.slice(0, 25);
 
   return (
-    <div className="aircraft-interiors-theme min-h-screen">
+    <div className="aircraft-interiors-theme min-h-screen bg-background text-foreground">
       <ScrollToTop />
       <DashboardHeader title={config.title} subtitle={config.subtitle} />
 
