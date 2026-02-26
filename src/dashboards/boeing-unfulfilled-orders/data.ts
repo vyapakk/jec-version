@@ -97,8 +97,19 @@ function parseExcelData(arrayBuffer: ArrayBuffer): BoeingUnfulfilledData {
 
   console.info("[Boeing Unfulfilled] Columns found:", { COL_CUSTOMER, COL_COUNTRY, COL_REGION, COL_MODEL, COL_ENGINE, COL_QTY });
 
+  // Parse number handling commas (e.g. "6,777" → 6777)
+  const parseNum = (v: any): number => {
+    if (typeof v === "number") return v;
+    return parseInt(String(v).replace(/,/g, "")) || 0;
+  };
+
   const records: UnfilledRecord[] = rawData
-    .filter((row) => row[COL_CUSTOMER] && row[COL_QTY])
+    .filter((row) => {
+      const customer = String(row[COL_CUSTOMER] || "").trim();
+      // Skip summary/total rows
+      if (!customer || customer.toLowerCase().includes("grand total") || customer.toLowerCase().includes("total")) return false;
+      return row[COL_QTY] != null;
+    })
     .map((row) => {
       const model = String(row[COL_MODEL] || "").trim();
       return {
@@ -108,7 +119,7 @@ function parseExcelData(arrayBuffer: ArrayBuffer): BoeingUnfulfilledData {
         model,
         modelFamily: getModelFamily(model),
         engine: String(row[COL_ENGINE] || "").trim(),
-        quantity: parseInt(String(row[COL_QTY])) || 0,
+        quantity: parseNum(row[COL_QTY]),
       };
     })
     .filter((r) => r.quantity > 0);
