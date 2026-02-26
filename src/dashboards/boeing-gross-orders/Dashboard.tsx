@@ -127,7 +127,7 @@ const BoeingGrossOrdersDashboard = () => {
           <MultiLineChart
             data={data.ordersByYearByRegion} years={data.years}
             title="Gross Orders by Region" subtitle="Order trends by geographic region"
-            segments={data.regions.filter((r) => r !== "Unidentified")} onSegmentClick={openDrillDown}
+            segments={data.regions} onSegmentClick={openDrillDown}
           />
         </div>
 
