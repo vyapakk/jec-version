@@ -115,7 +115,7 @@ function parseExcelData(arrayBuffer: ArrayBuffer): BoeingUnfulfilledData {
       return {
         customer: String(row[COL_CUSTOMER] || "").trim(),
         country: String(row[COL_COUNTRY] || "").trim(),
-        region: String(row[COL_REGION] || "Unidentified").trim(),
+        region: String(row[COL_REGION] || "Undisclosed").trim().replace(/^Unidentified$/i, "Undisclosed"),
         model,
         modelFamily: getModelFamily(model),
         engine: String(row[COL_ENGINE] || "").trim(),
