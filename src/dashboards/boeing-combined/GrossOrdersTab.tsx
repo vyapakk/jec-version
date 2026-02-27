@@ -59,7 +59,14 @@ export function GrossOrdersTab() {
   }, [netData]);
 
   const netYearsInRange = useMemo(() => filteredYears.filter(y => netDataYears.includes(y)), [filteredYears, netDataYears]);
-  const hasNetData = netYearsInRange.length > 0;
+  const netDataMinYear = netDataYears.length > 0 ? netDataYears[0] : Infinity;
+  const rangeStartsInNetData = filteredYears.length > 0 && filteredYears[0] >= netDataMinYear;
+  const hasNetData = rangeStartsInNetData && netYearsInRange.length > 0;
+  const netRangeLabel = useMemo(() => {
+    if (!hasNetData) return undefined;
+    if (netYearsInRange.length === 1) return String(netYearsInRange[0]);
+    return `${netYearsInRange[0]}–${netYearsInRange[netYearsInRange.length - 1]}`;
+  }, [netYearsInRange, hasNetData]);
 
   const rangeNetCancel = useMemo(() => {
     if (!netData || !hasNetData) return undefined;
@@ -139,12 +146,12 @@ export function GrossOrdersTab() {
         <KPICard title={`Gross Orders in ${rangeLabel}`} value={rangeOrders} icon={TrendingUp} accentColor="accent" delay={0.2} />
         <KPICard title={`Customers in ${rangeLabel}`} value={rangeCustomers} icon={Users} accentColor="chart-4" delay={0.3} />
         {hasNetData && rangeNetCancel !== undefined ? (
-          <KPICard title="Net Orders (Year of Cancellation)" value={rangeNetCancel} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle={rangeLabel} />
+          <KPICard title="Net Orders (Year of Cancellation)" value={rangeNetCancel} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle={netRangeLabel} />
         ) : (
           <KPICard title="Net Orders (Year of Cancellation)" value={0} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle="Data not disclosed" />
         )}
         {hasNetData && rangeNetOrder !== undefined ? (
-          <KPICard title="Net Orders (Year of Order)" value={rangeNetOrder} icon={FileCheck} accentColor="primary" delay={0.5} subtitle={rangeLabel} />
+          <KPICard title="Net Orders (Year of Order)" value={rangeNetOrder} icon={FileCheck} accentColor="primary" delay={0.5} subtitle={netRangeLabel} />
         ) : (
           <KPICard title="Net Orders (Year of Order)" value={0} icon={FileCheck} accentColor="primary" delay={0.5} subtitle="Data not disclosed" />
         )}
