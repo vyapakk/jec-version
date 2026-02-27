@@ -129,79 +129,99 @@ export function DataTable({ headers, rows }: { headers: string[]; rows: (string 
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Year Range Selector
+// Year Range Selector (From / To with shortcuts)
 // ═══════════════════════════════════════════════════════════════
 
-export type YearRangeMode = "last5" | "last10" | "last20" | "all" | "single";
-
-const RANGE_PRESETS: { mode: YearRangeMode; label: string }[] = [
-  { mode: "last5", label: "Last 5Y" },
-  { mode: "last10", label: "Last 10Y" },
-  { mode: "last20", label: "Last 20Y" },
-  { mode: "all", label: "All Time" },
-  { mode: "single", label: "Single Year" },
+const RANGE_SHORTCUTS: { label: string; span: number | "all" }[] = [
+  { label: "5Y", span: 5 },
+  { label: "10Y", span: 10 },
+  { label: "20Y", span: 20 },
+  { label: "All", span: "all" },
 ];
 
 export function useYearRange(allYears: number[]) {
-  const [mode, setMode] = useState<YearRangeMode>("last5");
-  const [singleYear, setSingleYear] = useState<number>(() => allYears.length ? allYears[allYears.length - 1] : 2025);
+  const [fromYear, setFromYear] = useState<number>(() => {
+    if (!allYears.length) return 2020;
+    return Math.max(allYears[0], allYears[allYears.length - 1] - 4);
+  });
+  const [toYear, setToYear] = useState<number>(() => allYears.length ? allYears[allYears.length - 1] : 2025);
 
   const filteredYears = useMemo(() => {
     if (!allYears.length) return [];
-    const maxYear = allYears[allYears.length - 1];
-    switch (mode) {
-      case "last5": return allYears.filter(y => y > maxYear - 5);
-      case "last10": return allYears.filter(y => y > maxYear - 10);
-      case "last20": return allYears.filter(y => y > maxYear - 20);
-      case "all": return allYears;
-      case "single": return [singleYear];
-    }
-  }, [allYears, mode, singleYear]);
+    return allYears.filter(y => y >= fromYear && y <= toYear);
+  }, [allYears, fromYear, toYear]);
 
   const rangeLabel = useMemo(() => {
-    if (mode === "single") return String(singleYear);
-    if (filteredYears.length <= 1) return String(filteredYears[0] || "");
-    return `${filteredYears[0]}–${filteredYears[filteredYears.length - 1]}`;
-  }, [mode, singleYear, filteredYears]);
+    if (fromYear === toYear) return String(fromYear);
+    return `${fromYear}–${toYear}`;
+  }, [fromYear, toYear]);
 
-  return { mode, setMode, singleYear, setSingleYear, filteredYears, rangeLabel };
+  const isSingle = fromYear === toYear;
+
+  return { fromYear, setFromYear, toYear, setToYear, filteredYears, rangeLabel, isSingle };
 }
 
-export function YearRangeSelector({ allYears, mode, onModeChange, singleYear, onSingleYearChange }: {
+export function YearRangeSelector({ allYears, fromYear, toYear, onFromChange, onToChange }: {
   allYears: number[];
-  mode: YearRangeMode;
-  onModeChange: (m: YearRangeMode) => void;
-  singleYear: number;
-  onSingleYearChange: (y: number) => void;
+  fromYear: number;
+  toYear: number;
+  onFromChange: (y: number) => void;
+  onToChange: (y: number) => void;
 }) {
+  const maxYear = allYears.length ? allYears[allYears.length - 1] : 2025;
+
+  const applyShortcut = (span: number | "all") => {
+    if (span === "all") {
+      onFromChange(allYears[0]);
+      onToChange(allYears[allYears.length - 1]);
+    } else {
+      onFromChange(Math.max(allYears[0], maxYear - span + 1));
+      onToChange(maxYear);
+    }
+  };
+
+  const isShortcutActive = (span: number | "all") => {
+    if (span === "all") return fromYear === allYears[0] && toYear === allYears[allYears.length - 1];
+    const expectedFrom = Math.max(allYears[0], maxYear - span + 1);
+    return fromYear === expectedFrom && toYear === maxYear;
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Calendar className="h-4 w-4 text-muted-foreground hidden sm:block" />
       <div className="flex items-center rounded-lg border border-border bg-secondary/50 p-0.5">
-        {RANGE_PRESETS.filter(p => p.mode !== "single").map(p => (
+        {RANGE_SHORTCUTS.map(s => (
           <Button
-            key={p.mode}
+            key={s.label}
             variant="ghost"
             size="sm"
-            onClick={() => onModeChange(p.mode)}
+            onClick={() => applyShortcut(s.span)}
             className={`h-7 px-3 text-xs font-medium transition-colors ${
-              mode === p.mode
+              isShortcutActive(s.span)
                 ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {p.label}
+            {s.label}
           </Button>
         ))}
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">or</span>
-        <Select
-          value={mode === "single" ? singleYear.toString() : ""}
-          onValueChange={v => { onSingleYearChange(parseInt(v)); onModeChange("single"); }}
-        >
-          <SelectTrigger className={`w-[100px] h-8 text-xs border-border bg-secondary/50 ${mode === "single" ? "border-primary ring-1 ring-primary/30" : ""}`}>
-            <SelectValue placeholder="Year" />
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">From</span>
+        <Select value={fromYear.toString()} onValueChange={v => { const y = parseInt(v); onFromChange(y); if (y > toYear) onToChange(y); }}>
+          <SelectTrigger className="w-[85px] h-8 text-xs border-border bg-secondary/50">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border max-h-[300px]">
+            {[...allYears].reverse().map(y => (
+              <SelectItem key={y} value={y.toString()} className="text-xs">{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground">To</span>
+        <Select value={toYear.toString()} onValueChange={v => { const y = parseInt(v); onToChange(y); if (y < fromYear) onFromChange(y); }}>
+          <SelectTrigger className="w-[85px] h-8 text-xs border-border bg-secondary/50">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border max-h-[300px]">
             {[...allYears].reverse().map(y => (
