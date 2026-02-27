@@ -140,11 +140,13 @@ const RANGE_SHORTCUTS: { label: string; span: number | "all" }[] = [
 ];
 
 export function useYearRange(allYears: number[]) {
+  const currentYear = new Date().getFullYear();
+  const effectiveMax = allYears.length ? Math.min(allYears[allYears.length - 1], currentYear) : currentYear;
   const [fromYear, setFromYear] = useState<number>(() => {
-    if (!allYears.length) return 2020;
-    return Math.max(allYears[0], allYears[allYears.length - 1] - 4);
+    if (!allYears.length) return currentYear - 4;
+    return Math.max(allYears[0], effectiveMax - 4);
   });
-  const [toYear, setToYear] = useState<number>(() => allYears.length ? allYears[allYears.length - 1] : 2025);
+  const [toYear, setToYear] = useState<number>(() => effectiveMax);
 
   const filteredYears = useMemo(() => {
     if (!allYears.length) return [];
@@ -168,7 +170,8 @@ export function YearRangeSelector({ allYears, fromYear, toYear, onFromChange, on
   onFromChange: (y: number) => void;
   onToChange: (y: number) => void;
 }) {
-  const maxYear = allYears.length ? allYears[allYears.length - 1] : 2025;
+  const currentYear = new Date().getFullYear();
+  const maxYear = allYears.length ? Math.min(allYears[allYears.length - 1], currentYear) : currentYear;
 
   const applyShortcut = (span: number | "all") => {
     if (span === "all") {
