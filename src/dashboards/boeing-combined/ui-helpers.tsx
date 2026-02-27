@@ -3,10 +3,11 @@
  * Standalone copy — identical to boeing-gross-orders/ui-helpers.
  */
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LucideIcon, Download, BarChart3, Table2 } from "lucide-react";
+import { LucideIcon, Download, BarChart3, Table2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function AnimatedCounter({ value, prefix = "", suffix = "", decimals = 0, duration = 1.5, className = "" }: {
   value: number; prefix?: string; suffix?: string; decimals?: number; duration?: number; className?: string;
@@ -125,4 +126,103 @@ export function DataTable({ headers, rows }: { headers: string[]; rows: (string 
       </table>
     </div>
   );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Year Range Selector
+// ═══════════════════════════════════════════════════════════════
+
+export type YearRangeMode = "last5" | "last10" | "last20" | "all" | "single";
+
+const RANGE_PRESETS: { mode: YearRangeMode; label: string }[] = [
+  { mode: "last5", label: "Last 5Y" },
+  { mode: "last10", label: "Last 10Y" },
+  { mode: "last20", label: "Last 20Y" },
+  { mode: "all", label: "All Time" },
+  { mode: "single", label: "Single Year" },
+];
+
+export function useYearRange(allYears: number[]) {
+  const [mode, setMode] = useState<YearRangeMode>("last5");
+  const [singleYear, setSingleYear] = useState<number>(() => allYears.length ? allYears[allYears.length - 1] : 2025);
+
+  const filteredYears = useMemo(() => {
+    if (!allYears.length) return [];
+    const maxYear = allYears[allYears.length - 1];
+    switch (mode) {
+      case "last5": return allYears.filter(y => y > maxYear - 5);
+      case "last10": return allYears.filter(y => y > maxYear - 10);
+      case "last20": return allYears.filter(y => y > maxYear - 20);
+      case "all": return allYears;
+      case "single": return [singleYear];
+    }
+  }, [allYears, mode, singleYear]);
+
+  const rangeLabel = useMemo(() => {
+    if (mode === "single") return String(singleYear);
+    if (filteredYears.length <= 1) return String(filteredYears[0] || "");
+    return `${filteredYears[0]}–${filteredYears[filteredYears.length - 1]}`;
+  }, [mode, singleYear, filteredYears]);
+
+  return { mode, setMode, singleYear, setSingleYear, filteredYears, rangeLabel };
+}
+
+export function YearRangeSelector({ allYears, mode, onModeChange, singleYear, onSingleYearChange }: {
+  allYears: number[];
+  mode: YearRangeMode;
+  onModeChange: (m: YearRangeMode) => void;
+  singleYear: number;
+  onSingleYearChange: (y: number) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Calendar className="h-4 w-4 text-muted-foreground hidden sm:block" />
+      <div className="flex items-center rounded-lg border border-border bg-secondary/50 p-0.5">
+        {RANGE_PRESETS.filter(p => p.mode !== "single").map(p => (
+          <Button
+            key={p.mode}
+            variant="ghost"
+            size="sm"
+            onClick={() => onModeChange(p.mode)}
+            className={`h-7 px-3 text-xs font-medium transition-colors ${
+              mode === p.mode
+                ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {p.label}
+          </Button>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">or</span>
+        <Select
+          value={mode === "single" ? singleYear.toString() : ""}
+          onValueChange={v => { onSingleYearChange(parseInt(v)); onModeChange("single"); }}
+        >
+          <SelectTrigger className={`w-[100px] h-8 text-xs border-border bg-secondary/50 ${mode === "single" ? "border-primary ring-1 ring-primary/30" : ""}`}>
+            <SelectValue placeholder="Year" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border max-h-[300px]">
+            {[...allYears].reverse().map(y => (
+              <SelectItem key={y} value={y.toString()} className="text-xs">{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
+/** Sum values across multiple years for a segment-keyed data structure. Returns a new structure with values at sentinelYear. */
+export function aggregateYears(
+  data: Record<string, Record<number, number>>,
+  years: number[],
+  sentinelYear: number = 0
+): Record<string, Record<number, number>> {
+  const result: Record<string, Record<number, number>> = {};
+  for (const [segment, yearMap] of Object.entries(data)) {
+    result[segment] = { [sentinelYear]: years.reduce((sum, y) => sum + (yearMap[y] || 0), 0) };
+  }
+  return result;
 }
