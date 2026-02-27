@@ -38,9 +38,8 @@ export function GrossOrdersTab() {
   const netData = useNetOrdersData();
 
   const allYears = data?.years || [];
-  const { mode, setMode, singleYear, setSingleYear, filteredYears, rangeLabel } = useYearRange(allYears);
+  const { fromYear, setFromYear, toYear, setToYear, filteredYears, rangeLabel, isSingle } = useYearRange(allYears);
 
-  const isSingle = mode === "single";
   const SENTINEL = 0;
 
   // Aggregated KPIs
@@ -88,16 +87,16 @@ export function GrossOrdersTab() {
   // Donut data — aggregate across filteredYears
   const donutData = useMemo(() => {
     if (!data) return { byRegion: {}, byModel: {}, byEngine: {}, byCountry: {} };
-    const yr = isSingle ? singleYear : SENTINEL;
+    const yr = isSingle ? fromYear : SENTINEL;
     return {
       byRegion: isSingle ? data.ordersByYearByRegion : aggregateYears(data.ordersByYearByRegion, filteredYears, SENTINEL),
       byModel: isSingle ? data.ordersByYearByModelFamily : aggregateYears(data.ordersByYearByModelFamily, filteredYears, SENTINEL),
       byEngine: isSingle ? data.ordersByYearByEngine : aggregateYears(data.ordersByYearByEngine, filteredYears, SENTINEL),
       byCountry: isSingle ? data.ordersByYearByCountry : aggregateYears(data.ordersByYearByCountry, filteredYears, SENTINEL),
     };
-  }, [data, filteredYears, isSingle, singleYear]);
+  }, [data, filteredYears, isSingle, fromYear]);
 
-  const donutYear = isSingle ? singleYear : SENTINEL;
+  const donutYear = isSingle ? fromYear : SENTINEL;
 
   const modelFamiliesForDonut = useMemo(() => {
     if (!data) return [];
@@ -139,7 +138,7 @@ export function GrossOrdersTab() {
   return (
     <div className="py-8">
       <div className="flex justify-end mb-6">
-        <YearRangeSelector allYears={allYears} mode={mode} onModeChange={setMode} singleYear={singleYear} onSingleYearChange={setSingleYear} />
+        <YearRangeSelector allYears={allYears} fromYear={fromYear} toYear={toYear} onFromChange={setFromYear} onToChange={setToYear} />
       </div>
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-5">
