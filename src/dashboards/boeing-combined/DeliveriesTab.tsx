@@ -8,21 +8,73 @@ import { AlertCircle, RefreshCw, Plane, Users, TrendingUp, Search, X, ChevronDow
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { config } from "./config";
 import { useDeliveryData, useDrillDown, type DeliveryCustomerSummary } from "./data";
-import { KPICard } from "./ui-helpers";
+import { KPICard, YearRangeSelector, useYearRange, aggregateYears } from "./ui-helpers";
 import { TrendLineChart, MultiLineChart, YearlyDonutChart, DrillDownModal } from "./charts";
 import AppFooter from "./AppFooter";
 
 export function DeliveriesTab() {
-  const [selectedYear, setSelectedYear] = useState<number>(config.defaultYear);
   const { data, isLoading, error, refetch } = useDeliveryData(config.dataUrls.deliveries);
   const { drillDownState, openDrillDown, closeDrillDown } = useDrillDown();
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<DeliveryCustomerSummary | null>(null);
   const [showAllCustomers, setShowAllCustomers] = useState(false);
+
+  const allYears = data?.years || [];
+  const { mode, setMode, singleYear, setSingleYear, filteredYears, rangeLabel } = useYearRange(allYears);
+
+  const isSingle = mode === "single";
+  const SENTINEL = 0;
+
+  // Aggregated KPIs
+  const rangeDeliveries = useMemo(() => {
+    if (!data) return 0;
+    return filteredYears.reduce((sum, y) => sum + (data.deliveriesByYear[y] || 0), 0);
+  }, [data, filteredYears]);
+
+  const rangeCustomers = useMemo(() => {
+    if (!data) return 0;
+    return new Set(data.deliveries.filter(o => filteredYears.includes(o.year)).map(o => o.customer)).size;
+  }, [data, filteredYears]);
+
+  // Donut data — aggregate across filteredYears
+  const donutData = useMemo(() => {
+    if (!data) return { byRegion: {}, byModel: {}, byEngine: {}, byCountry: {} };
+    return {
+      byRegion: isSingle ? data.deliveriesByYearByRegion : aggregateYears(data.deliveriesByYearByRegion, filteredYears, SENTINEL),
+      byModel: isSingle ? data.deliveriesByYearByModelFamily : aggregateYears(data.deliveriesByYearByModelFamily, filteredYears, SENTINEL),
+      byEngine: isSingle ? data.deliveriesByYearByEngine : aggregateYears(data.deliveriesByYearByEngine, filteredYears, SENTINEL),
+      byCountry: isSingle ? data.deliveriesByYearByCountry : aggregateYears(data.deliveriesByYearByCountry, filteredYears, SENTINEL),
+    };
+  }, [data, filteredYears, isSingle, singleYear]);
+
+  const donutYear = isSingle ? singleYear : SENTINEL;
+
+  const modelFamiliesForDonut = useMemo(() => {
+    if (!data) return [];
+    return data.modelFamilies.filter(mf => (donutData.byModel[mf]?.[donutYear] || 0) > 0)
+      .sort((a, b) => (donutData.byModel[b]?.[donutYear] || 0) - (donutData.byModel[a]?.[donutYear] || 0));
+  }, [data, donutData, donutYear]);
+
+  const regionsForDonut = useMemo(() => {
+    if (!data) return [];
+    return data.regions.filter(r => (donutData.byRegion[r]?.[donutYear] || 0) > 0)
+      .sort((a, b) => (donutData.byRegion[b]?.[donutYear] || 0) - (donutData.byRegion[a]?.[donutYear] || 0));
+  }, [data, donutData, donutYear]);
+
+  const enginesForDonut = useMemo(() => {
+    if (!data) return [];
+    return data.engines.filter(e => (donutData.byEngine[e]?.[donutYear] || 0) > 0)
+      .sort((a, b) => (donutData.byEngine[b]?.[donutYear] || 0) - (donutData.byEngine[a]?.[donutYear] || 0));
+  }, [data, donutData, donutYear]);
+
+  const countriesForDonut = useMemo(() => {
+    if (!data) return [];
+    return Object.keys(donutData.byCountry).filter(c => (donutData.byCountry[c]?.[donutYear] || 0) > 0)
+      .sort((a, b) => (donutData.byCountry[b]?.[donutYear] || 0) - (donutData.byCountry[a]?.[donutYear] || 0)).slice(0, 20);
+  }, [data, donutData, donutYear]);
 
   const filteredCustomers = useMemo(() => {
     if (!data) return [];
@@ -30,29 +82,6 @@ export function DeliveriesTab() {
     if (!s) return data.customers;
     return data.customers.filter(c => c.name.toLowerCase().includes(s) || c.country.toLowerCase().includes(s) || c.region.toLowerCase().includes(s) || c.models.some(m => m.toLowerCase().includes(s)));
   }, [data, customerSearch]);
-
-  const modelFamiliesForDonut = useMemo(() => {
-    if (!data) return [];
-    return data.modelFamilies.filter(mf => (data.deliveriesByYearByModelFamily[mf]?.[selectedYear] || 0) > 0).sort((a, b) => (data.deliveriesByYearByModelFamily[b]?.[selectedYear] || 0) - (data.deliveriesByYearByModelFamily[a]?.[selectedYear] || 0));
-  }, [data, selectedYear]);
-
-  const regionsForDonut = useMemo(() => {
-    if (!data) return [];
-    return data.regions.filter(r => (data.deliveriesByYearByRegion[r]?.[selectedYear] || 0) > 0).sort((a, b) => (data.deliveriesByYearByRegion[b]?.[selectedYear] || 0) - (data.deliveriesByYearByRegion[a]?.[selectedYear] || 0));
-  }, [data, selectedYear]);
-
-  const enginesForDonut = useMemo(() => {
-    if (!data) return [];
-    return data.engines.filter(e => (data.deliveriesByYearByEngine[e]?.[selectedYear] || 0) > 0).sort((a, b) => (data.deliveriesByYearByEngine[b]?.[selectedYear] || 0) - (data.deliveriesByYearByEngine[a]?.[selectedYear] || 0));
-  }, [data, selectedYear]);
-
-  const countriesForDonut = useMemo(() => {
-    if (!data) return [];
-    return Object.keys(data.deliveriesByYearByCountry).filter(c => (data.deliveriesByYearByCountry[c]?.[selectedYear] || 0) > 0).sort((a, b) => (data.deliveriesByYearByCountry[b]?.[selectedYear] || 0) - (data.deliveriesByYearByCountry[a]?.[selectedYear] || 0)).slice(0, 20);
-  }, [data, selectedYear]);
-
-  const yearDeliveries = useMemo(() => data?.deliveriesByYear[selectedYear] || 0, [data, selectedYear]);
-  const yearCustomers = useMemo(() => { if (!data) return 0; return new Set(data.deliveries.filter(o => o.year === selectedYear).map(o => o.customer)).size; }, [data, selectedYear]);
 
   if (isLoading) return <div className="flex items-center justify-center py-20"><div className="flex items-center gap-3 text-muted-foreground"><div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /><span>Loading deliveries data...</span></div></div>;
   if (error || !data) return <div className="flex flex-col items-center justify-center gap-4 py-20"><AlertCircle className="h-12 w-12 text-destructive" /><p className="text-muted-foreground">{error || "Unable to load data"}</p><Button onClick={refetch}><RefreshCw className="mr-2 h-4 w-4" /> Try Again</Button></div>;
@@ -63,34 +92,26 @@ export function DeliveriesTab() {
   return (
     <div className="py-8">
       <div className="flex justify-end mb-6">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground">Select Year</span>
-          <Select value={selectedYear.toString()} onValueChange={v => setSelectedYear(parseInt(v))}>
-            <SelectTrigger className="w-[120px] border-[hsl(217,33%,18%)] bg-[hsl(217,33%,14%)] text-[hsl(210,40%,96%)] [&>svg]:text-[hsl(210,40%,96%)]"><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-[hsl(222,47%,11%)] border-[hsl(217,33%,18%)] text-[hsl(210,40%,96%)] max-h-[300px]">
-              {[...data.years].reverse().map(y => <SelectItem key={y} value={y.toString()} className="text-[hsl(210,40%,96%)] focus:bg-[hsl(217,33%,18%)] focus:text-[hsl(210,40%,96%)]">{y}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        <YearRangeSelector allYears={allYears} mode={mode} onModeChange={setMode} singleYear={singleYear} onSingleYearChange={setSingleYear} />
       </div>
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <KPICard title="Total Lifetime Deliveries" value={data.totalLifetimeDeliveries} icon={Plane} accentColor="primary" delay={0.1} />
-        <KPICard title={`Deliveries in ${selectedYear}`} value={yearDeliveries} icon={TrendingUp} accentColor="accent" delay={0.2} />
-        <KPICard title={`Customers in ${selectedYear}`} value={yearCustomers} icon={Users} accentColor="chart-4" delay={0.3} />
+        <KPICard title={`Deliveries in ${rangeLabel}`} value={rangeDeliveries} icon={TrendingUp} accentColor="accent" delay={0.2} />
+        <KPICard title={`Customers in ${rangeLabel}`} value={rangeCustomers} icon={Users} accentColor="chart-4" delay={0.3} />
       </div>
 
-      <div className="mb-8"><TrendLineChart data={data.deliveriesByYear} years={data.years} title="Delivery Trends" subtitle="Total Boeing deliveries over time" metricLabel="Deliveries" downloadTitle="Boeing Deliveries — Delivery Trends" /></div>
-      <div className="mb-8"><MultiLineChart data={data.deliveriesByYearByModelFamily} years={data.years} title="Deliveries by Aircraft Model" subtitle="Delivery trends by model family" segments={data.modelFamilies} onSegmentClick={handleDrillDown} downloadTitle="Boeing Deliveries — By Aircraft Model" gradientPrefix="del-mf" /></div>
-      <div className="mb-8"><MultiLineChart data={data.deliveriesByYearByRegion} years={data.years} title="Deliveries by Region" subtitle="Delivery trends by geographic region" segments={data.regions} onSegmentClick={handleDrillDown} downloadTitle="Boeing Deliveries — By Region" gradientPrefix="del-rg" /></div>
+      <div className="mb-8"><TrendLineChart data={data.deliveriesByYear} years={filteredYears} title="Delivery Trends" subtitle="Total Boeing deliveries over time" metricLabel="Deliveries" downloadTitle="Boeing Deliveries — Delivery Trends" /></div>
+      <div className="mb-8"><MultiLineChart data={data.deliveriesByYearByModelFamily} years={filteredYears} title="Deliveries by Aircraft Model" subtitle="Delivery trends by model family" segments={data.modelFamilies} onSegmentClick={handleDrillDown} downloadTitle="Boeing Deliveries — By Aircraft Model" gradientPrefix="del-mf" /></div>
+      <div className="mb-8"><MultiLineChart data={data.deliveriesByYearByRegion} years={filteredYears} title="Deliveries by Region" subtitle="Delivery trends by geographic region" segments={data.regions} onSegmentClick={handleDrillDown} downloadTitle="Boeing Deliveries — By Region" gradientPrefix="del-rg" /></div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mb-8">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Distribution in {selectedYear}</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Distribution in {rangeLabel}</h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <YearlyDonutChart data={data.deliveriesByYearByRegion} year={selectedYear} title="By Region" segments={regionsForDonut} metricLabel="Deliveries" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Deliveries — By Region (${selectedYear})`} />
-          <YearlyDonutChart data={data.deliveriesByYearByModelFamily} year={selectedYear} title="By Aircraft Model" segments={modelFamiliesForDonut} metricLabel="Deliveries" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Deliveries — By Model (${selectedYear})`} />
-          <YearlyDonutChart data={data.deliveriesByYearByEngine} year={selectedYear} title="By Engine" segments={enginesForDonut} metricLabel="Deliveries" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Deliveries — By Engine (${selectedYear})`} />
-          <YearlyDonutChart data={data.deliveriesByYearByCountry} year={selectedYear} title="By Country" segments={countriesForDonut} metricLabel="Deliveries" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Deliveries — By Country (${selectedYear})`} />
+          <YearlyDonutChart data={donutData.byRegion} year={donutYear} title="By Region" segments={regionsForDonut} metricLabel="Deliveries" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Deliveries — By Region (${rangeLabel})`} />
+          <YearlyDonutChart data={donutData.byModel} year={donutYear} title="By Aircraft Model" segments={modelFamiliesForDonut} metricLabel="Deliveries" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Deliveries — By Model (${rangeLabel})`} />
+          <YearlyDonutChart data={donutData.byEngine} year={donutYear} title="By Engine" segments={enginesForDonut} metricLabel="Deliveries" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Deliveries — By Engine (${rangeLabel})`} />
+          <YearlyDonutChart data={donutData.byCountry} year={donutYear} title="By Country" segments={countriesForDonut} metricLabel="Deliveries" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Deliveries — By Country (${rangeLabel})`} />
         </div>
       </motion.div>
 

@@ -8,11 +8,10 @@ import { AlertCircle, RefreshCw, Plane, Users, TrendingUp, Search, X, ChevronDow
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { config } from "./config";
 import { useOrderData, useDrillDown, type OrderCustomerSummary } from "./data";
-import { KPICard } from "./ui-helpers";
+import { KPICard, YearRangeSelector, useYearRange, aggregateYears } from "./ui-helpers";
 import { TrendLineChart, MultiLineChart, YearlyDonutChart, DrillDownModal } from "./charts";
 import AppFooter from "./AppFooter";
 
@@ -30,7 +29,6 @@ function useNetOrdersData() {
 }
 
 export function GrossOrdersTab() {
-  const [selectedYear, setSelectedYear] = useState<number>(config.defaultYear);
   const { data, isLoading, error, refetch } = useOrderData(config.dataUrls.orders);
   const { drillDownState, openDrillDown, closeDrillDown } = useDrillDown();
   const [customerSearch, setCustomerSearch] = useState("");
@@ -38,35 +36,83 @@ export function GrossOrdersTab() {
   const [showAllCustomers, setShowAllCustomers] = useState(false);
   const netData = useNetOrdersData();
 
+  const allYears = data?.years || [];
+  const { mode, setMode, singleYear, setSingleYear, filteredYears, rangeLabel } = useYearRange(allYears);
+
+  const isSingle = mode === "single";
+  const SENTINEL = 0;
+
+  // Aggregated KPIs
+  const rangeOrders = useMemo(() => {
+    if (!data) return 0;
+    return filteredYears.reduce((sum, y) => sum + (data.ordersByYear[y] || 0), 0);
+  }, [data, filteredYears]);
+
+  const rangeCustomers = useMemo(() => {
+    if (!data) return 0;
+    return new Set(data.orders.filter(o => filteredYears.includes(o.year)).map(o => o.customer)).size;
+  }, [data, filteredYears]);
+
+  const rangeNetCancel = useMemo(() => {
+    if (!netData) return undefined;
+    return filteredYears.reduce((sum, y) => {
+      const v = netData.netInYearOfCancel[String(y)];
+      return v !== undefined ? sum + v : sum;
+    }, 0);
+  }, [netData, filteredYears]);
+
+  const rangeNetOrder = useMemo(() => {
+    if (!netData) return undefined;
+    return filteredYears.reduce((sum, y) => {
+      const v = netData.netInYearOfOrder[String(y)];
+      return v !== undefined ? sum + v : sum;
+    }, 0);
+  }, [netData, filteredYears]);
+
+  // Donut data — aggregate across filteredYears
+  const donutData = useMemo(() => {
+    if (!data) return { byRegion: {}, byModel: {}, byEngine: {}, byCountry: {} };
+    const yr = isSingle ? singleYear : SENTINEL;
+    return {
+      byRegion: isSingle ? data.ordersByYearByRegion : aggregateYears(data.ordersByYearByRegion, filteredYears, SENTINEL),
+      byModel: isSingle ? data.ordersByYearByModelFamily : aggregateYears(data.ordersByYearByModelFamily, filteredYears, SENTINEL),
+      byEngine: isSingle ? data.ordersByYearByEngine : aggregateYears(data.ordersByYearByEngine, filteredYears, SENTINEL),
+      byCountry: isSingle ? data.ordersByYearByCountry : aggregateYears(data.ordersByYearByCountry, filteredYears, SENTINEL),
+    };
+  }, [data, filteredYears, isSingle, singleYear]);
+
+  const donutYear = isSingle ? singleYear : SENTINEL;
+
+  const modelFamiliesForDonut = useMemo(() => {
+    if (!data) return [];
+    return data.modelFamilies.filter(mf => (donutData.byModel[mf]?.[donutYear] || 0) > 0)
+      .sort((a, b) => (donutData.byModel[b]?.[donutYear] || 0) - (donutData.byModel[a]?.[donutYear] || 0));
+  }, [data, donutData, donutYear]);
+
+  const regionsForDonut = useMemo(() => {
+    if (!data) return [];
+    return data.regions.filter(r => (donutData.byRegion[r]?.[donutYear] || 0) > 0)
+      .sort((a, b) => (donutData.byRegion[b]?.[donutYear] || 0) - (donutData.byRegion[a]?.[donutYear] || 0));
+  }, [data, donutData, donutYear]);
+
+  const enginesForDonut = useMemo(() => {
+    if (!data) return [];
+    return data.engines.filter(e => (donutData.byEngine[e]?.[donutYear] || 0) > 0)
+      .sort((a, b) => (donutData.byEngine[b]?.[donutYear] || 0) - (donutData.byEngine[a]?.[donutYear] || 0));
+  }, [data, donutData, donutYear]);
+
+  const countriesForDonut = useMemo(() => {
+    if (!data) return [];
+    return Object.keys(donutData.byCountry).filter(c => (donutData.byCountry[c]?.[donutYear] || 0) > 0)
+      .sort((a, b) => (donutData.byCountry[b]?.[donutYear] || 0) - (donutData.byCountry[a]?.[donutYear] || 0)).slice(0, 20);
+  }, [data, donutData, donutYear]);
+
   const filteredCustomers = useMemo(() => {
     if (!data) return [];
     const s = customerSearch.toLowerCase();
     if (!s) return data.customers;
     return data.customers.filter(c => c.name.toLowerCase().includes(s) || c.country.toLowerCase().includes(s) || c.region.toLowerCase().includes(s) || c.models.some(m => m.toLowerCase().includes(s)));
   }, [data, customerSearch]);
-
-  const modelFamiliesForDonut = useMemo(() => {
-    if (!data) return [];
-    return data.modelFamilies.filter(mf => (data.ordersByYearByModelFamily[mf]?.[selectedYear] || 0) > 0).sort((a, b) => (data.ordersByYearByModelFamily[b]?.[selectedYear] || 0) - (data.ordersByYearByModelFamily[a]?.[selectedYear] || 0));
-  }, [data, selectedYear]);
-
-  const regionsForDonut = useMemo(() => {
-    if (!data) return [];
-    return data.regions.filter(r => (data.ordersByYearByRegion[r]?.[selectedYear] || 0) > 0).sort((a, b) => (data.ordersByYearByRegion[b]?.[selectedYear] || 0) - (data.ordersByYearByRegion[a]?.[selectedYear] || 0));
-  }, [data, selectedYear]);
-
-  const enginesForDonut = useMemo(() => {
-    if (!data) return [];
-    return data.engines.filter(e => (data.ordersByYearByEngine[e]?.[selectedYear] || 0) > 0).sort((a, b) => (data.ordersByYearByEngine[b]?.[selectedYear] || 0) - (data.ordersByYearByEngine[a]?.[selectedYear] || 0));
-  }, [data, selectedYear]);
-
-  const countriesForDonut = useMemo(() => {
-    if (!data) return [];
-    return Object.keys(data.ordersByYearByCountry).filter(c => (data.ordersByYearByCountry[c]?.[selectedYear] || 0) > 0).sort((a, b) => (data.ordersByYearByCountry[b]?.[selectedYear] || 0) - (data.ordersByYearByCountry[a]?.[selectedYear] || 0)).slice(0, 20);
-  }, [data, selectedYear]);
-
-  const yearOrders = useMemo(() => data?.ordersByYear[selectedYear] || 0, [data, selectedYear]);
-  const yearCustomers = useMemo(() => { if (!data) return 0; return new Set(data.orders.filter(o => o.year === selectedYear).map(o => o.customer)).size; }, [data, selectedYear]);
 
   if (isLoading) return <div className="flex items-center justify-center py-20"><div className="flex items-center gap-3 text-muted-foreground"><div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /><span>Loading orders data...</span></div></div>;
   if (error || !data) return <div className="flex flex-col items-center justify-center gap-4 py-20"><AlertCircle className="h-12 w-12 text-destructive" /><p className="text-muted-foreground">{error || "Unable to load data"}</p><Button onClick={refetch}><RefreshCw className="mr-2 h-4 w-4" /> Try Again</Button></div>;
@@ -77,44 +123,36 @@ export function GrossOrdersTab() {
   return (
     <div className="py-8">
       <div className="flex justify-end mb-6">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground">Select Year</span>
-          <Select value={selectedYear.toString()} onValueChange={v => setSelectedYear(parseInt(v))}>
-            <SelectTrigger className="w-[120px] border-[hsl(217,33%,18%)] bg-[hsl(217,33%,14%)] text-[hsl(210,40%,96%)] [&>svg]:text-[hsl(210,40%,96%)]"><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-[hsl(222,47%,11%)] border-[hsl(217,33%,18%)] text-[hsl(210,40%,96%)] max-h-[300px]">
-              {[...data.years].reverse().map(y => <SelectItem key={y} value={y.toString()} className="text-[hsl(210,40%,96%)] focus:bg-[hsl(217,33%,18%)] focus:text-[hsl(210,40%,96%)]">{y}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        <YearRangeSelector allYears={allYears} mode={mode} onModeChange={setMode} singleYear={singleYear} onSingleYearChange={setSingleYear} />
       </div>
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         <KPICard title="Total Lifetime Orders" value={data.totalLifetimeOrders} icon={Plane} accentColor="primary" delay={0.1} />
-        <KPICard title={`Gross Orders in ${selectedYear}`} value={yearOrders} icon={TrendingUp} accentColor="accent" delay={0.2} />
-        <KPICard title={`Customers in ${selectedYear}`} value={yearCustomers} icon={Users} accentColor="chart-4" delay={0.3} />
-        {netData?.netInYearOfCancel[String(selectedYear)] !== undefined ? (
-          <KPICard title={`Net Orders (Year of Cancel) ${selectedYear}`} value={netData.netInYearOfCancel[String(selectedYear)]} icon={MinusCircle} accentColor="chart-3" delay={0.4} />
+        <KPICard title={`Gross Orders in ${rangeLabel}`} value={rangeOrders} icon={TrendingUp} accentColor="accent" delay={0.2} />
+        <KPICard title={`Customers in ${rangeLabel}`} value={rangeCustomers} icon={Users} accentColor="chart-4" delay={0.3} />
+        {rangeNetCancel !== undefined && rangeNetCancel !== 0 ? (
+          <KPICard title={`Net Orders (Cancel) ${rangeLabel}`} value={rangeNetCancel} icon={MinusCircle} accentColor="chart-3" delay={0.4} />
         ) : (
-          <KPICard title={`Net Orders (Year of Cancel) ${selectedYear}`} value={0} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle="Data not disclosed" />
+          <KPICard title={`Net Orders (Cancel) ${rangeLabel}`} value={0} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle="Data not disclosed" />
         )}
-        {netData?.netInYearOfOrder[String(selectedYear)] !== undefined ? (
-          <KPICard title={`Net Orders (Year of Order) ${selectedYear}`} value={netData.netInYearOfOrder[String(selectedYear)]} icon={FileCheck} accentColor="primary" delay={0.5} />
+        {rangeNetOrder !== undefined && rangeNetOrder !== 0 ? (
+          <KPICard title={`Net Orders (Order) ${rangeLabel}`} value={rangeNetOrder} icon={FileCheck} accentColor="primary" delay={0.5} />
         ) : (
-          <KPICard title={`Net Orders (Year of Order) ${selectedYear}`} value={0} icon={FileCheck} accentColor="primary" delay={0.5} subtitle="Data not disclosed" />
+          <KPICard title={`Net Orders (Order) ${rangeLabel}`} value={0} icon={FileCheck} accentColor="primary" delay={0.5} subtitle="Data not disclosed" />
         )}
       </div>
 
-      <div className="mb-8"><TrendLineChart data={data.ordersByYear} years={data.years} title="Gross Order Trends" subtitle="Total Boeing gross orders over time" metricLabel="Gross Orders" downloadTitle="Boeing Gross Orders — Gross Order Trends" /></div>
-      <div className="mb-8"><MultiLineChart data={data.ordersByYearByModelFamily} years={data.years} title="Gross Orders by Aircraft Model" subtitle="Order trends by model family" segments={data.modelFamilies} onSegmentClick={handleDrillDown} downloadTitle="Boeing Gross Orders — By Aircraft Model" gradientPrefix="go-mf" /></div>
-      <div className="mb-8"><MultiLineChart data={data.ordersByYearByRegion} years={data.years} title="Gross Orders by Region" subtitle="Order trends by geographic region" segments={data.regions} onSegmentClick={handleDrillDown} downloadTitle="Boeing Gross Orders — By Region" gradientPrefix="go-rg" /></div>
+      <div className="mb-8"><TrendLineChart data={data.ordersByYear} years={filteredYears} title="Gross Order Trends" subtitle="Total Boeing gross orders over time" metricLabel="Gross Orders" downloadTitle="Boeing Gross Orders — Gross Order Trends" /></div>
+      <div className="mb-8"><MultiLineChart data={data.ordersByYearByModelFamily} years={filteredYears} title="Gross Orders by Aircraft Model" subtitle="Order trends by model family" segments={data.modelFamilies} onSegmentClick={handleDrillDown} downloadTitle="Boeing Gross Orders — By Aircraft Model" gradientPrefix="go-mf" /></div>
+      <div className="mb-8"><MultiLineChart data={data.ordersByYearByRegion} years={filteredYears} title="Gross Orders by Region" subtitle="Order trends by geographic region" segments={data.regions} onSegmentClick={handleDrillDown} downloadTitle="Boeing Gross Orders — By Region" gradientPrefix="go-rg" /></div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mb-8">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Distribution in {selectedYear}</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Distribution in {rangeLabel}</h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <YearlyDonutChart data={data.ordersByYearByRegion} year={selectedYear} title="By Region" segments={regionsForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Region (${selectedYear})`} />
-          <YearlyDonutChart data={data.ordersByYearByModelFamily} year={selectedYear} title="By Aircraft Model" segments={modelFamiliesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Model (${selectedYear})`} />
-          <YearlyDonutChart data={data.ordersByYearByEngine} year={selectedYear} title="By Engine" segments={enginesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Engine (${selectedYear})`} />
-          <YearlyDonutChart data={data.ordersByYearByCountry} year={selectedYear} title="By Country" segments={countriesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Country (${selectedYear})`} />
+          <YearlyDonutChart data={donutData.byRegion} year={donutYear} title="By Region" segments={regionsForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Region (${rangeLabel})`} />
+          <YearlyDonutChart data={donutData.byModel} year={donutYear} title="By Aircraft Model" segments={modelFamiliesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Model (${rangeLabel})`} />
+          <YearlyDonutChart data={donutData.byEngine} year={donutYear} title="By Engine" segments={enginesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Engine (${rangeLabel})`} />
+          <YearlyDonutChart data={donutData.byCountry} year={donutYear} title="By Country" segments={countriesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Country (${rangeLabel})`} />
         </div>
       </motion.div>
 
