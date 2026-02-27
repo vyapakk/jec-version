@@ -108,11 +108,13 @@ export function TrendLineChart({ data, years, title, subtitle, metricLabel, down
   const { downloadChart } = useChartDownload();
   const [view, setView] = useState<"chart" | "table">("chart");
 
+  const YOY_CAP = 200; // Cap at ±200% to prevent outliers from flattening the chart
   const chartData = years.map((year, i) => {
     const val = data[year] || 0;
     const prev = i > 0 ? (data[years[i - 1]] || 0) : null;
-    const yoyGrowth = prev !== null && prev > 0 ? ((val - prev) / prev) * 100 : null;
-    return { year, value: val, yoyGrowth };
+    const rawYoy = prev !== null && prev > 0 ? ((val - prev) / prev) * 100 : null;
+    const yoyGrowth = rawYoy !== null ? Math.max(-YOY_CAP, Math.min(YOY_CAP, rawYoy)) : null;
+    return { year, value: val, yoyGrowth, rawYoy };
   });
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -123,7 +125,7 @@ export function TrendLineChart({ data, years, title, subtitle, metricLabel, down
         <div className="rounded-lg border border-border bg-popover p-4 shadow-lg">
           <p className="mb-2 font-semibold text-foreground">{label}</p>
           {valEntry && <div className="flex items-center gap-2 text-sm"><div className="h-3 w-3 rounded-full" style={{ backgroundColor: "hsl(192, 95%, 55%)" }} /><span className="text-muted-foreground">{metricLabel}:</span><span className="font-mono font-medium text-foreground">{valEntry.value.toLocaleString()}</span></div>}
-          {yoyEntry && yoyEntry.value !== null && <div className="flex items-center gap-2 text-sm mt-1"><div className="h-3 w-3 rounded-full" style={{ backgroundColor: "hsl(38, 92%, 55%)" }} /><span className="text-muted-foreground">YoY Growth:</span><span className={`font-mono font-medium ${yoyEntry.value >= 0 ? "text-chart-4" : "text-destructive"}`}>{yoyEntry.value >= 0 ? "+" : ""}{yoyEntry.value.toFixed(1)}%</span></div>}
+          {payload[0]?.payload?.rawYoy != null && <div className="flex items-center gap-2 text-sm mt-1"><div className="h-3 w-3 rounded-full" style={{ backgroundColor: "hsl(38, 92%, 55%)" }} /><span className="text-muted-foreground">YoY Growth:</span><span className={`font-mono font-medium ${payload[0].payload.rawYoy >= 0 ? "text-chart-4" : "text-destructive"}`}>{payload[0].payload.rawYoy >= 0 ? "+" : ""}{payload[0].payload.rawYoy.toFixed(1)}%</span></div>}
         </div>
       );
     }
@@ -148,7 +150,7 @@ export function TrendLineChart({ data, years, title, subtitle, metricLabel, down
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 18%)" />
                 <XAxis dataKey="year" stroke="hsl(215, 20%, 55%)" fontSize={10} tickLine={false} interval={Math.ceil(years.length / 10)} />
                 <YAxis yAxisId="left" stroke="hsl(215, 20%, 55%)" fontSize={10} tickLine={false} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v} width={50} />
-                <YAxis yAxisId="right" orientation="right" stroke="hsl(215, 20%, 55%)" fontSize={10} tickLine={false} tickFormatter={v => `${v.toFixed(0)}%`} domain={['auto', 'auto']} width={40} />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(215, 20%, 55%)" fontSize={10} tickLine={false} tickFormatter={v => `${v.toFixed(0)}%`} domain={[-YOY_CAP, YOY_CAP]} width={50} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend content={() => (
                   <div className="mt-3 sm:mt-4 flex flex-wrap justify-center gap-3 sm:gap-6">
