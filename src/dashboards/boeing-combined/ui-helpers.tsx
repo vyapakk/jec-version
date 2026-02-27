@@ -141,16 +141,13 @@ const RANGE_SHORTCUTS: { label: string; span: number | "all" }[] = [
 
 export function useYearRange(allYears: number[]) {
   const currentYear = new Date().getFullYear();
-  const latestCompletedYear = currentYear - 1;
-  const maxYear = allYears.length
-    ? Math.min(allYears[allYears.length - 1], latestCompletedYear)
-    : latestCompletedYear;
+  const anchorYear = currentYear - 1; // last completed year
 
   const [fromYear, setFromYear] = useState<number>(() => {
-    if (!allYears.length) return maxYear - 4;
-    return Math.max(allYears[0], maxYear - 4);
+    if (!allYears.length) return anchorYear - 4;
+    return Math.max(allYears[0], anchorYear - 4);
   });
-  const [toYear, setToYear] = useState<number>(() => maxYear);
+  const [toYear, setToYear] = useState<number>(() => anchorYear);
 
   const filteredYears = useMemo(() => {
     if (!allYears.length) return [];
@@ -175,25 +172,22 @@ export function YearRangeSelector({ allYears, fromYear, toYear, onFromChange, on
   onToChange: (y: number) => void;
 }) {
   const currentYear = new Date().getFullYear();
-  const latestCompletedYear = currentYear - 1;
-  const maxYear = allYears.length
-    ? Math.min(allYears[allYears.length - 1], latestCompletedYear)
-    : latestCompletedYear;
+  const anchorYear = currentYear - 1;
 
   const applyShortcut = (span: number | "all") => {
     if (span === "all") {
       onFromChange(allYears[0]);
-      onToChange(maxYear);
+      onToChange(allYears[allYears.length - 1]);
     } else {
-      onFromChange(Math.max(allYears[0], maxYear - span + 1));
-      onToChange(maxYear);
+      onFromChange(Math.max(allYears[0], currentYear - span));
+      onToChange(anchorYear);
     }
   };
 
   const isShortcutActive = (span: number | "all") => {
-    if (span === "all") return fromYear === allYears[0] && toYear === maxYear;
-    const expectedFrom = Math.max(allYears[0], maxYear - span + 1);
-    return fromYear === expectedFrom && toYear === maxYear;
+    if (span === "all") return fromYear === allYears[0] && toYear === allYears[allYears.length - 1];
+    const expectedFrom = Math.max(allYears[0], currentYear - span);
+    return fromYear === expectedFrom && toYear === anchorYear;
   };
 
   return (
