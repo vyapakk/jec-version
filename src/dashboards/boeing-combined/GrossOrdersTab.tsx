@@ -149,10 +149,10 @@ export function GrossOrdersTab() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mb-8">
         <h2 className="text-xl font-semibold text-foreground mb-4">Distribution in {rangeLabel}</h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <YearlyDonutChart data={donutData.byRegion} year={donutYear} title="By Region" segments={regionsForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Region (${rangeLabel})`} />
-          <YearlyDonutChart data={donutData.byModel} year={donutYear} title="By Aircraft Model" segments={modelFamiliesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Model (${rangeLabel})`} />
-          <YearlyDonutChart data={donutData.byEngine} year={donutYear} title="By Engine" segments={enginesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Engine (${rangeLabel})`} />
-          <YearlyDonutChart data={donutData.byCountry} year={donutYear} title="By Country" segments={countriesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Country (${rangeLabel})`} />
+          <YearlyDonutChart data={donutData.byRegion} year={donutYear} title="By Region" segments={regionsForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Region (${rangeLabel})`} yearLabel={rangeLabel} />
+          <YearlyDonutChart data={donutData.byModel} year={donutYear} title="By Aircraft Model" segments={modelFamiliesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Model (${rangeLabel})`} yearLabel={rangeLabel} />
+          <YearlyDonutChart data={donutData.byEngine} year={donutYear} title="By Engine" segments={enginesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Engine (${rangeLabel})`} yearLabel={rangeLabel} />
+          <YearlyDonutChart data={donutData.byCountry} year={donutYear} title="By Country" segments={countriesForDonut} metricLabel="Orders" onSegmentClick={handleDrillDown} downloadTitle={`Boeing Gross Orders — By Country (${rangeLabel})`} yearLabel={rangeLabel} />
         </div>
       </motion.div>
 

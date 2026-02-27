@@ -246,12 +246,12 @@ const renderActivePieShape = (props: any) => {
 
 interface YearlyDonutChartProps {
   data: Record<string, Record<number, number>>; year: number; title: string;
-  segments: string[]; metricLabel: string;
+  segments: string[]; metricLabel: string; yearLabel?: string;
   onSegmentClick?: (name: string, yearlyData: Record<number, number>, color: string) => void;
   downloadTitle: string;
 }
 
-export function YearlyDonutChart({ data, year, title, segments, metricLabel, onSegmentClick, downloadTitle }: YearlyDonutChartProps) {
+export function YearlyDonutChart({ data, year, title, segments, metricLabel, onSegmentClick, downloadTitle, yearLabel }: YearlyDonutChartProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const { downloadChart } = useChartDownload();
@@ -272,7 +272,7 @@ export function YearlyDonutChart({ data, year, title, segments, metricLabel, onS
   return (
     <motion.div ref={chartRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="rounded-xl border border-border bg-card p-3 sm:p-6">
       <div className="mb-4 flex items-start justify-between">
-        <div><h3 className="text-lg font-semibold text-foreground">{title}</h3><p className="text-sm text-muted-foreground">{year} Distribution</p></div>
+        <div><h3 className="text-lg font-semibold text-foreground">{title}</h3><p className="text-sm text-muted-foreground">{yearLabel || year} Distribution</p></div>
         <div className="flex items-center gap-1"><ChartTableViewToggle view={view} onViewChange={setView} /><ChartDownloadButton onClick={() => downloadChart(chartRef, `${title.toLowerCase().replace(/\s+/g, "-")}-${year}`, downloadTitle)} /></div>
       </div>
       <AnimatedViewSwitch view={view}
