@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle, RefreshCw, Plane, Users, TrendingUp, Search, X, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertCircle, RefreshCw, Plane, Users, TrendingUp, Search, X, ChevronDown, ChevronUp, MinusCircle, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,6 +15,18 @@ import { useOrderData, useDrillDown, type OrderCustomerSummary } from "./data";
 import { KPICard } from "./ui-helpers";
 import { TrendLineChart, MultiLineChart, YearlyDonutChart, DrillDownModal } from "./charts";
 import AppFooter from "./AppFooter";
+
+// Static net-orders data from Boeing (2007–2025 only)
+const NET_IN_YEAR_OF_CANCEL: Record<number, number> = {
+  2007: 1413, 2008: 662, 2009: 142, 2010: 530, 2011: 805, 2012: 1203,
+  2013: 1355, 2014: 1432, 2015: 768, 2016: 668, 2017: 912, 2018: 893,
+  2019: 54, 2020: -471, 2021: 479, 2022: 774, 2023: 1314, 2024: 377, 2025: 1075,
+};
+const NET_IN_YEAR_OF_ORDER: Record<number, number> = {
+  2007: 1095, 2008: 552, 2009: 235, 2010: 492, 2011: 803, 2012: 978,
+  2013: 1266, 2014: 1113, 2015: 737, 2016: 632, 2017: 697, 2018: 702,
+  2019: 230, 2020: 178, 2021: 879, 2022: 892, 2023: 1445, 2024: 553, 2025: 1175,
+};
 
 export function GrossOrdersTab() {
   const [selectedYear, setSelectedYear] = useState<number>(config.defaultYear);
@@ -74,10 +86,20 @@ export function GrossOrdersTab() {
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         <KPICard title="Total Lifetime Orders" value={data.totalLifetimeOrders} icon={Plane} accentColor="primary" delay={0.1} />
         <KPICard title={`Gross Orders in ${selectedYear}`} value={yearOrders} icon={TrendingUp} accentColor="accent" delay={0.2} />
         <KPICard title={`Customers in ${selectedYear}`} value={yearCustomers} icon={Users} accentColor="chart-4" delay={0.3} />
+        {NET_IN_YEAR_OF_CANCEL[selectedYear] !== undefined ? (
+          <KPICard title={`Net Orders (Year of Cancel) ${selectedYear}`} value={NET_IN_YEAR_OF_CANCEL[selectedYear]} icon={MinusCircle} accentColor="chart-3" delay={0.4} />
+        ) : (
+          <KPICard title={`Net Orders (Year of Cancel) ${selectedYear}`} value={0} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle="Data not disclosed" />
+        )}
+        {NET_IN_YEAR_OF_ORDER[selectedYear] !== undefined ? (
+          <KPICard title={`Net Orders (Year of Order) ${selectedYear}`} value={NET_IN_YEAR_OF_ORDER[selectedYear]} icon={FileCheck} accentColor="primary" delay={0.5} />
+        ) : (
+          <KPICard title={`Net Orders (Year of Order) ${selectedYear}`} value={0} icon={FileCheck} accentColor="primary" delay={0.5} subtitle="Data not disclosed" />
+        )}
       </div>
 
       <div className="mb-8"><TrendLineChart data={data.ordersByYear} years={data.years} title="Gross Order Trends" subtitle="Total Boeing gross orders over time" metricLabel="Gross Orders" downloadTitle="Boeing Gross Orders — Gross Order Trends" /></div>
