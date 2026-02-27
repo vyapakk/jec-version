@@ -53,21 +53,29 @@ export function GrossOrdersTab() {
     return new Set(data.orders.filter(o => filteredYears.includes(o.year)).map(o => o.customer)).size;
   }, [data, filteredYears]);
 
+  const netDataYears = useMemo(() => {
+    if (!netData) return [];
+    return Object.keys(netData.netInYearOfCancel).map(Number).sort((a, b) => a - b);
+  }, [netData]);
+
+  const netYearsInRange = useMemo(() => filteredYears.filter(y => netDataYears.includes(y)), [filteredYears, netDataYears]);
+  const hasNetData = netYearsInRange.length > 0;
+
   const rangeNetCancel = useMemo(() => {
-    if (!netData) return undefined;
-    return filteredYears.reduce((sum, y) => {
+    if (!netData || !hasNetData) return undefined;
+    return netYearsInRange.reduce((sum, y) => {
       const v = netData.netInYearOfCancel[String(y)];
       return v !== undefined ? sum + v : sum;
     }, 0);
-  }, [netData, filteredYears]);
+  }, [netData, netYearsInRange, hasNetData]);
 
   const rangeNetOrder = useMemo(() => {
-    if (!netData) return undefined;
-    return filteredYears.reduce((sum, y) => {
+    if (!netData || !hasNetData) return undefined;
+    return netYearsInRange.reduce((sum, y) => {
       const v = netData.netInYearOfOrder[String(y)];
       return v !== undefined ? sum + v : sum;
     }, 0);
-  }, [netData, filteredYears]);
+  }, [netData, netYearsInRange, hasNetData]);
 
   // Donut data — aggregate across filteredYears
   const donutData = useMemo(() => {
@@ -130,15 +138,15 @@ export function GrossOrdersTab() {
         <KPICard title="Total Lifetime Orders" value={data.totalLifetimeOrders} icon={Plane} accentColor="primary" delay={0.1} />
         <KPICard title={`Gross Orders in ${rangeLabel}`} value={rangeOrders} icon={TrendingUp} accentColor="accent" delay={0.2} />
         <KPICard title={`Customers in ${rangeLabel}`} value={rangeCustomers} icon={Users} accentColor="chart-4" delay={0.3} />
-        {rangeNetCancel !== undefined && rangeNetCancel !== 0 ? (
-          <KPICard title={`Net Orders (Cancel) ${rangeLabel}`} value={rangeNetCancel} icon={MinusCircle} accentColor="chart-3" delay={0.4} />
+        {hasNetData && rangeNetCancel !== undefined ? (
+          <KPICard title="Net Orders (Year of Cancellation)" value={rangeNetCancel} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle={rangeLabel} />
         ) : (
-          <KPICard title={`Net Orders (Cancel) ${rangeLabel}`} value={0} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle="Data not disclosed" />
+          <KPICard title="Net Orders (Year of Cancellation)" value={0} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle="Data not disclosed" />
         )}
-        {rangeNetOrder !== undefined && rangeNetOrder !== 0 ? (
-          <KPICard title={`Net Orders (Order) ${rangeLabel}`} value={rangeNetOrder} icon={FileCheck} accentColor="primary" delay={0.5} />
+        {hasNetData && rangeNetOrder !== undefined ? (
+          <KPICard title="Net Orders (Year of Order)" value={rangeNetOrder} icon={FileCheck} accentColor="primary" delay={0.5} subtitle={rangeLabel} />
         ) : (
-          <KPICard title={`Net Orders (Order) ${rangeLabel}`} value={0} icon={FileCheck} accentColor="primary" delay={0.5} subtitle="Data not disclosed" />
+          <KPICard title="Net Orders (Year of Order)" value={0} icon={FileCheck} accentColor="primary" delay={0.5} subtitle="Data not disclosed" />
         )}
       </div>
 
