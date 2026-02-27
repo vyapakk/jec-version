@@ -117,7 +117,7 @@ export function GrossOrdersTab() {
   if (isLoading) return <div className="flex items-center justify-center py-20"><div className="flex items-center gap-3 text-muted-foreground"><div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /><span>Loading orders data...</span></div></div>;
   if (error || !data) return <div className="flex flex-col items-center justify-center gap-4 py-20"><AlertCircle className="h-12 w-12 text-destructive" /><p className="text-muted-foreground">{error || "Unable to load data"}</p><Button onClick={refetch}><RefreshCw className="mr-2 h-4 w-4" /> Try Again</Button></div>;
 
-  const handleDrillDown = (name: string, yearlyData: Record<number, number>, color: string) => openDrillDown(name, yearlyData, color, "Gross Orders");
+  const handleDrillDown = (name: string, _yearlyData: Record<number, number>, color: string) => openDrillDown(name, data.ordersByYearByRegion[name] || data.ordersByYearByModelFamily[name] || data.ordersByYearByEngine[name] || data.ordersByYearByCountry[name] || _yearlyData, color, "Gross Orders");
   const displayedCustomers = showAllCustomers ? filteredCustomers : filteredCustomers.slice(0, 25);
 
   return (
