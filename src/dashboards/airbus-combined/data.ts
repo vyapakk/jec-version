@@ -424,6 +424,7 @@ export function useChartDownload() {
 
 export interface AirlineFleetRecord {
   customer: string;
+  country: string;
   region: string;
   variant: string;
   metric: "Orders" | "Deliveries" | "Operational";
@@ -439,6 +440,7 @@ export interface AirlineFleetVariantDetail {
 
 export interface AirlineFleetSummary {
   name: string;
+  country: string;
   region: string;
   totalOrders: number;
   totalDeliveries: number;
@@ -492,13 +494,14 @@ function parseFleetExcel(ab: ArrayBuffer): AirlineFleetData {
   const records: AirlineFleetRecord[] = [];
   for (const r of rows) {
     const customer = String(r["Customer"] || "").trim();
+    const country = String(r["Country"] || "").trim();
     const region = String(r["Region"] || "").trim();
     const variant = String(r["Aircraft_Variant"] || "").trim();
     const metricRaw = String(r["Metric_Full"] || "").trim();
     const count = parseNum(r["No. of Aircraft"] ?? r["No of Aircraft"]);
     const metric = parseMetric(metricRaw);
     if (!customer || !variant || !metric) continue;
-    records.push({ customer, region, variant, metric, count });
+    records.push({ customer, country, region, variant, metric, count });
   }
 
   // Aggregations
@@ -510,6 +513,7 @@ function parseFleetExcel(ab: ArrayBuffer): AirlineFleetData {
 
   // Per-airline aggregation
   const airlineMap = new Map<string, {
+    country: string;
     region: string;
     totalOrders: number; totalDeliveries: number; operational: number;
     variantMap: Map<string, { orders: number; deliveries: number; operational: number }>;
@@ -542,7 +546,7 @@ function parseFleetExcel(ab: ArrayBuffer): AirlineFleetData {
     // Per airline
     let airline = airlineMap.get(rec.customer);
     if (!airline) {
-      airline = { region: rec.region, totalOrders: 0, totalDeliveries: 0, operational: 0, variantMap: new Map() };
+      airline = { country: rec.country, region: rec.region, totalOrders: 0, totalDeliveries: 0, operational: 0, variantMap: new Map() };
       airlineMap.set(rec.customer, airline);
     }
     if (rec.metric === "Orders") airline.totalOrders += rec.count;
@@ -559,6 +563,7 @@ function parseFleetExcel(ab: ArrayBuffer): AirlineFleetData {
   const airlines: AirlineFleetSummary[] = [...airlineMap.entries()]
     .map(([name, a]) => ({
       name,
+      country: a.country,
       region: a.region,
       totalOrders: a.totalOrders,
       totalDeliveries: a.totalDeliveries,

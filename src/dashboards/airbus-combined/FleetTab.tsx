@@ -55,6 +55,7 @@ export function FleetTab() {
     if (!s) return data.airlines;
     return data.airlines.filter(a =>
       a.name.toLowerCase().includes(s) ||
+      a.country.toLowerCase().includes(s) ||
       a.region.toLowerCase().includes(s) ||
       a.variants.some(v => v.variant.toLowerCase().includes(s))
     );
@@ -148,6 +149,7 @@ export function FleetTab() {
             <div className="overflow-x-auto">
               <table className="w-full"><thead><tr className="border-b border-border bg-secondary/30">
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Airline</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Country</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Region</th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Orders</th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Deliveries</th>
@@ -158,6 +160,7 @@ export function FleetTab() {
               <tbody className="divide-y divide-border">{displayedAirlines.map((a, i) => (
                 <tr key={i} className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => setSelectedAirline(a)}>
                   <td className="px-4 py-3 text-sm font-medium text-primary hover:underline">{a.name}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{a.country}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{a.region}</td>
                   <td className="px-4 py-3 text-sm text-right font-mono text-foreground">{a.totalOrders.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-right font-mono text-foreground">{a.totalDeliveries.toLocaleString()}</td>
@@ -189,7 +192,8 @@ export function FleetTab() {
           {selectedAirline && <>
             <DialogHeader><DialogTitle className="text-foreground">{selectedAirline.name}</DialogTitle></DialogHeader>
             <div className="mt-4 space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="rounded-lg bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Country</p><p className="text-sm font-medium text-foreground">{selectedAirline.country || "—"}</p></div>
                 <div className="rounded-lg bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Region</p><p className="text-sm font-medium text-foreground">{selectedAirline.region || "—"}</p></div>
                 <div className="rounded-lg bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Total Orders</p><p className="text-lg font-bold text-foreground">{selectedAirline.totalOrders.toLocaleString()}</p></div>
                 <div className="rounded-lg bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Total Deliveries</p><p className="text-lg font-bold text-foreground">{selectedAirline.totalDeliveries.toLocaleString()}</p></div>
