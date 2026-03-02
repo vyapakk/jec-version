@@ -154,7 +154,7 @@ export function FleetTab() {
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Orders</th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Deliveries</th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Operational</th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Backlog</th>
+                
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Variants</th>
               </tr></thead>
               <tbody className="divide-y divide-border">{displayedAirlines.map((a, i) => (
@@ -165,7 +165,7 @@ export function FleetTab() {
                   <td className="px-4 py-3 text-sm text-right font-mono text-foreground">{a.totalOrders.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-right font-mono text-foreground">{a.totalDeliveries.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-right font-mono text-foreground">{a.operational.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-sm text-right font-mono text-foreground">{a.backlog.toLocaleString()}</td>
+                  
                   <td className="px-4 py-3 text-sm text-muted-foreground">
                     <div className="flex flex-wrap gap-1">
                       {a.variants.slice(0, 3).map(v => <span key={v.variant} className="inline-block rounded bg-secondary/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">{v.variant}</span>)}
