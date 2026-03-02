@@ -10,13 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { config } from "./config";
-import { useAirbusDeliveryData, useDrillDown, type AirbusDeliveryCustomerSummary } from "./data";
+import { useAirbusDeliveryData, useAirbusSummaryOverview, useDrillDown, type AirbusDeliveryCustomerSummary } from "./data";
 import { KPICard, YearRangeSelector, useYearRange, aggregateYears } from "./ui-helpers";
 import { TrendLineChart, MultiLineChart, YearlyDonutChart, DrillDownModal } from "./charts";
 import AppFooter from "./AppFooter";
 
 export function DeliveriesTab() {
   const { data, isLoading, error, refetch } = useAirbusDeliveryData(config.deliveriesDataUrl);
+  const { data: summaryData } = useAirbusSummaryOverview(config.summaryDataUrl);
   const { drillDownState, openDrillDown, closeDrillDown } = useDrillDown();
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<AirbusDeliveryCustomerSummary | null>(null);
@@ -127,7 +128,7 @@ export function DeliveriesTab() {
 
       {/* KPI Cards */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard title="Total Lifetime Deliveries" value={data.summary.totalLifetime} icon={Plane} accentColor="primary" delay={0.1} />
+        <KPICard title="Total Lifetime Deliveries" value={summaryData?.totalDeliveries ?? data.summary.totalLifetime} icon={Plane} accentColor="primary" delay={0.1} />
         <KPICard title={`Deliveries in ${rangeLabel}`} value={rangeDeliveries} icon={TrendingUp} accentColor="accent" delay={0.2} />
         <KPICard title={`Total Customers (${detailYearRange})`} value={totalCustomers} icon={Users} accentColor="chart-4" delay={0.3} />
         <KPICard title={`Active Programs in ${rangeLabel}`} value={activePrograms} icon={Package} accentColor="chart-3" delay={0.4} />

@@ -10,13 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { config } from "./config";
-import { useAirbusOrderData, useDrillDown, type AirbusCustomerSummary } from "./data";
+import { useAirbusOrderData, useAirbusSummaryOverview, useDrillDown, type AirbusCustomerSummary } from "./data";
 import { KPICard, YearRangeSelector, useYearRange, aggregateYears } from "./ui-helpers";
 import { TrendLineChart, MultiLineChart, YearlyDonutChart, DrillDownModal } from "./charts";
 import AppFooter from "./AppFooter";
 
 export function OrdersTab() {
   const { data, isLoading, error, refetch } = useAirbusOrderData(config.dataUrl);
+  const { data: summaryData } = useAirbusSummaryOverview(config.summaryDataUrl);
   const { drillDownState, openDrillDown, closeDrillDown } = useDrillDown();
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<AirbusCustomerSummary | null>(null);
@@ -144,7 +145,7 @@ export function OrdersTab() {
 
       {/* KPI Cards */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-5">
-        <KPICard title="Total Lifetime Gross Orders" value={data.summary.totalLifetimeGross} icon={Plane} accentColor="primary" delay={0.1} />
+        <KPICard title="Total Lifetime Gross Orders" value={summaryData?.totalOrders ?? data.summary.totalLifetimeGross} icon={Plane} accentColor="primary" delay={0.1} />
         <KPICard title={`Gross Orders in ${rangeLabel}`} value={rangeGross} icon={TrendingUp} accentColor="accent" delay={0.2} />
         <KPICard
           title="Total Customers (2021–2026)"
