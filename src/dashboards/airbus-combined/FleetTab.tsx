@@ -68,11 +68,10 @@ export function FleetTab() {
   return (
     <div className="py-8">
       {/* KPI Cards */}
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <KPICard title="Total Orders" value={data.totalOrders} icon={Plane} accentColor="primary" delay={0.1} />
         <KPICard title="Total Deliveries" value={data.totalDeliveries} icon={Package} accentColor="accent" delay={0.2} />
         <KPICard title="Operational Fleet" value={data.totalOperational} icon={ShieldCheck} accentColor="chart-4" delay={0.3} />
-        <KPICard title="Backlog (Unfulfilled)" value={data.totalBacklog} icon={Users} accentColor="chart-3" delay={0.4} />
       </div>
 
       {/* Grouped Bar Chart */}
