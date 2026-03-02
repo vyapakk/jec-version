@@ -1,50 +1,24 @@
 
 
-# Add Overview Tab to Airbus Dashboard
+# Align Lifetime KPI Numbers Across Tabs
 
-## Data Source
-The uploaded `Summary.xlsx` contains variant-level totals with 3 columns:
-- **Aircraft_Variant**: e.g., A220-100, A319ceo, A320neo, A350-900, A380
-- **Metric_Full**: Orders, Deliveries, In Fleet
-- **Units**: count
+## Problem
+The Orders tab shows "Total Lifetime Gross Orders" and the Deliveries tab shows "Total Lifetime Deliveries" by summing only the years in their respective Excel files (2006-2026). This produces lower numbers than the true lifetime totals from the Summary file used by the Overview tab (25,559 orders and 16,776 deliveries).
 
-This provides aggregated totals across all Airbus variants -- perfect for an Overview tab showing high-level KPIs and breakdowns.
+## Solution
+Import and use the summary data hook (`useAirbusSummaryOverview`) in both the Orders and Deliveries tabs to display the correct lifetime totals from the Summary file, while keeping all other year-range-based calculations unchanged.
 
-## What Will Be Built
+## Changes
 
-### Overview Tab Content
-1. **3 KPI Cards**: Total Orders, Total Deliveries, Total In Fleet (clickable to navigate to respective tabs)
-2. **Grouped Bar Chart**: Orders vs Deliveries vs In Fleet by Aircraft Family (A220, A320 Family, A330, A340, A350, A380, A300/A310)
-3. **Donut Charts** (side by side): Orders by Family + Deliveries by Family
-4. **Variant-Level Table**: All variants with Orders, Deliveries, In Fleet columns
-5. **Footer**: Standard Stratview footer
+### 1. OrdersTab.tsx
+- Import `useAirbusSummaryOverview` from `data.ts` and `config`
+- Call `useAirbusSummaryOverview(config.summaryDataUrl)` to fetch summary data
+- Replace the `data.summary.totalLifetimeGross` KPI value with `summaryData?.totalOrders ?? data.summary.totalLifetimeGross` so it shows 25,559 instead of the 2006+ sum
 
-### Files to Create/Modify
+### 2. DeliveriesTab.tsx
+- Import `useAirbusSummaryOverview` from `data.ts` and `config`
+- Call `useAirbusSummaryOverview(config.summaryDataUrl)` to fetch summary data
+- Replace the `data.summary.totalLifetime` KPI value with `summaryData?.totalDeliveries ?? data.summary.totalLifetime` so it shows 16,776 instead of the 2006+ sum
 
-1. **Copy `Summary.xlsx` to `public/data/airbus-summary.xlsx`**
-
-2. **`src/dashboards/airbus-combined/config.ts`** -- Add `summaryDataUrl: "/data/airbus-summary.xlsx"`
-
-3. **`src/dashboards/airbus-combined/data.ts`** -- Add:
-   - `AirbusSummaryOverviewData` interface (totalOrders, totalDeliveries, totalInFleet, byFamily, byVariant)
-   - `parseSummaryOverviewExcel()` function to parse the 3-column file, group by family using existing `getFamily()` mapper
-   - `useAirbusSummaryOverview(url)` hook
-
-4. **`src/dashboards/airbus-combined/OverviewTab.tsx`** (new file) -- Contains:
-   - KPI cards row (3 cards: Orders, Deliveries, In Fleet)
-   - Grouped bar chart by family (reuses existing `GroupedBarChart` from charts.tsx)
-   - Two donut charts side by side (reuses existing `SimpleDonutChart`)
-   - Variant detail table with search
-   - Loading/error states following existing patterns
-
-5. **`src/dashboards/airbus-combined/Dashboard.tsx`** -- Add Overview as the default/first tab, import OverviewTab
-
-### Technical Details
-
-- The "In Fleet" metric maps to "Operational" internally for consistency with existing naming
-- Family grouping reuses the existing `getFamily()` function in data.ts
-- Parser reads column `"Metric_Full"` and maps: "Orders" -> Orders, "Deliveries" -> Deliveries, "In Fleet" -> Operational
-- Column for count is `"Units"`
-- KPI cards will be clickable: Orders -> orders tab, Deliveries -> deliveries tab, In Fleet -> fleet tab (same pattern as Boeing overview)
-- Default active tab changes from "orders" to "overview"
+Both tabs will fall back to their existing calculated values if the summary data hasn't loaded yet, ensuring no loading delays or blank states.
 
