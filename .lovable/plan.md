@@ -1,58 +1,76 @@
 
 
-## Add Multi-Year Range Selector with Aggregated KPIs
+# Airbus Commercial Aircraft Orders & Deliveries — Orders Tab
 
-### What Changes
+## Data Understanding
 
-Replace the single "Select Year" dropdown with a **range selector** offering presets: Last 5 Years, Last 10 Years, Last 20 Years, All Time, plus a single-year option (current behavior). Everything -- KPI cards, charts, and donut distributions -- updates to reflect the selected range.
+The Excel file has two sheets:
 
-### How It Works
+**Sheet 1 (Orders Summary)** — program-level aggregates for 2006-2026:
+- Columns: year, oem, aircraft_program, order_type_full, Units Ordered
+- 3 metrics per program/year: Gross Orders, Net in year of cancellation, Net in year of order
+- Programs: A220, A320Family, A330, A340, A350, A380, A310/A300-600
 
-**When a range is selected (e.g., Last 5 Years = 2021-2025):**
-- **KPI cards** show summed/aggregated values across all years in the range
-  - "Gross Orders in 2021-2025" shows total orders summed across those 5 years
-  - "Customers in 2021-2025" shows unique customers across the range
-  - Net order KPIs sum across the range years
-- **Trend charts** (line/area) filter their x-axis to only show the selected years
-- **Donut charts** aggregate data across the range (not just one year), showing combined distribution
-- **Customer table** remains unfiltered (shows all-time data)
+**Sheet 2 (Detailed Orders)** — customer-level detail for 2021-2026 only:
+- Columns: Year, Order Date, Customer, Aircraft Model, Quantity
+- No country, region, or engine data (unlike Boeing)
 
-**When a single year is selected:** behaves exactly as it does today.
+## Approach
 
-### UI Design
+Since the data is modest in size, we will read the Excel directly using SheetJS (already installed). We will create a new dashboard folder `src/dashboards/airbus-combined/` mirroring the Boeing structure but adapted for Airbus data.
 
-```text
-[Last 5Y] [Last 10Y] [Last 20Y] [All Time] [Single Year ▾ 2025]
-```
+## What Will Be Built (Orders Tab Only)
 
-A row of pill buttons for range presets. The last option is a "Single Year" toggle that reveals the existing year dropdown, restoring current single-year behavior.
+### 1. Copy Excel to public/data
+- Place the file as `public/data/airbus-orders.xlsx`
 
-### Technical Details
+### 2. Create `src/dashboards/airbus-combined/` with these files:
 
-**1. Add YearRangeSelector component** (`ui-helpers.tsx`)
-- Toggle group with preset options + a single-year mode with dropdown
-- Props: `allYears`, `onChange: (filteredYears: number[]) => void`
-- Returns the selected subset of years
+**config.ts** — Dashboard configuration (title, file paths, routes)
 
-**2. Update GrossOrdersTab.tsx**
-- Replace the year selector with `YearRangeSelector`
-- Add `filteredYears` state derived from range selection
-- KPI cards compute aggregated values:
-  - Sum `data.ordersByYear[y]` for all `y` in `filteredYears`
-  - Count unique customers across `filteredYears`
-  - Sum net order values across `filteredYears`
-- KPI titles update dynamically: "Orders in 2021-2025" or "Orders in 2025"
-- Pass `filteredYears` to all chart components
-- Donut charts aggregate across range: sum values per segment across all years in range
+**data.ts** — SheetJS parsing logic for both sheets:
+- Parse Sheet 1 into summary structures: grossByYear, netCancelByYear, netOrderByYear, all broken down by aircraft_program
+- Parse Sheet 2 into detailed customer records
+- Aggregate customer summaries (name, total orders, models ordered, year range)
+- No region/country/engine breakdowns (data not available)
 
-**3. Update DeliveriesTab.tsx**
-- Same pattern: aggregated KPIs, filtered charts, aggregated donuts
+**OrdersTab.tsx** — The main Orders tab with:
+- **KPI Cards (5):**
+  1. Total Lifetime Gross Orders (sum of all gross orders 2006-2026)
+  2. Gross Orders in selected range
+  3. Unique Customers in range (from Sheet 2, only available 2021-2026)
+  4. Net Orders (Year of Cancellation) in range
+  5. Net Orders (Year of Order) in range
+- **Trend Line Chart:** Gross orders over time (2006-2026)
+- **Multi-Line Chart:** Gross orders by Aircraft Program (A220, A320Family, etc.)
+- **Multi-Line Chart:** Net Orders comparison — gross vs net-cancel vs net-order side by side
+- **Donut Charts (for selected range):**
+  - By Aircraft Program (gross orders share)
+  - (No region/country/engine donuts since data is unavailable)
+- **Customer Table** (only populated for 2021-2026 range):
+  - Searchable, sortable table with customer name, aircraft models, total orders, year range
+  - Click-to-expand detail dialog showing individual order lines with dates
+  - Note displayed when range includes years outside 2021-2026 that customer data is partial
+- **Year Range Selector** reusing the existing shared component
 
-**4. No changes needed to charts.tsx**
-- Chart components already accept a `years` prop and render accordingly
+**Dashboard.tsx** — Shell with tabs (only "Orders" active for now, placeholders for Deliveries and Pending Orders)
 
-### Files Modified
-- `src/dashboards/boeing-combined/ui-helpers.tsx` -- add YearRangeSelector component
-- `src/dashboards/boeing-combined/GrossOrdersTab.tsx` -- integrate range selector, aggregate KPIs
-- `src/dashboards/boeing-combined/DeliveriesTab.tsx` -- integrate range selector, aggregate KPIs
+**layout.tsx, ui-helpers.tsx, charts.tsx, AppFooter.tsx** — Reuse/mirror from boeing-combined (shared chart components, KPI cards, etc.)
+
+### 3. Register the dashboard
+- Add route entry in `src/dashboards/registry.ts`
+- Add route in `src/App.tsx`
+- Add dataset entry in `src/data/datasets.ts` and `src/data/dashboardRoutes.ts`
+
+## Key Differences from Boeing Dashboard
+- No region, country, or engine breakdowns (data not available)
+- Summary data (Sheet 1) provides program-level aggregates for the full 2006-2026 range
+- Customer detail only available for 2021-2026
+- Aircraft programs used directly as categories (no "model family" mapping needed)
+- Order Date available in detail (Boeing has Month)
+
+## Technical Details
+- SheetJS reads both sheets by name: `wb.Sheets["Orders Summary"]` and `wb.Sheets["Detailed Orders"]`
+- The shared chart components (TrendLineChart, MultiLineChart, YearlyDonutChart, DrillDownModal) from boeing-combined will be copied to the airbus folder for independence
+- Year range selector and KPI cards reused from shared ui-helpers pattern
 
