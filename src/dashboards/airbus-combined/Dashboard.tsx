@@ -11,13 +11,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { config } from "./config";
 import { DashboardHeader, ScrollToTop } from "./layout";
+import { OverviewTab } from "./OverviewTab";
 import { OrdersTab } from "./OrdersTab";
 import { DeliveriesTab } from "./DeliveriesTab";
 import { FleetTab } from "./FleetTab";
 
 const AirbusCombinedDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTab] = useState("overview");
 
   return (
     <div className="aircraft-interiors-theme min-h-screen bg-background text-foreground">
@@ -33,12 +34,14 @@ const AirbusCombinedDashboard = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start bg-secondary/30 border border-border rounded-lg p-1 h-auto flex-wrap">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground px-4 py-2 text-sm font-medium">Overview</TabsTrigger>
             <TabsTrigger value="orders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground px-4 py-2 text-sm font-medium">Orders</TabsTrigger>
             <TabsTrigger value="deliveries" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground px-4 py-2 text-sm font-medium">Deliveries</TabsTrigger>
             <TabsTrigger value="fleet" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground px-4 py-2 text-sm font-medium">Airline Orders, Deliveries & Fleet</TabsTrigger>
             <TabsTrigger value="pending-orders" disabled className="text-muted-foreground/50 px-4 py-2 text-sm font-medium cursor-not-allowed">Pending Orders (Coming Soon)</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="overview"><OverviewTab onTabChange={setActiveTab} /></TabsContent>
           <TabsContent value="orders"><OrdersTab /></TabsContent>
           <TabsContent value="deliveries"><DeliveriesTab /></TabsContent>
           <TabsContent value="fleet"><FleetTab /></TabsContent>
