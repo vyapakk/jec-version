@@ -131,6 +131,11 @@ export function OrdersTab() {
     openDrillDown(name, yearlyData, color, "Gross Orders");
   };
 
+  const handleProgramDonutDrillDown = (name: string, _yearlyData: Record<number, number>, color: string) => {
+    if (!data) return;
+    openDrillDown(name, data.summary.grossByYearByProgram[name] || {}, color, "Gross Orders");
+  };
+
   return (
     <div className="py-8">
       <div className="flex justify-end mb-6">
@@ -201,7 +206,7 @@ export function OrdersTab() {
             title="By Aircraft Program"
             segments={programsForDonut}
             metricLabel="Orders"
-            onSegmentClick={handleDrillDown}
+            onSegmentClick={handleProgramDonutDrillDown}
             downloadTitle={`Airbus Orders — By Program (${rangeLabel})`}
             yearLabel={rangeLabel}
           />
