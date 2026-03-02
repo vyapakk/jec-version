@@ -1,34 +1,50 @@
 
 
-# Replace Fleet Data File and Fix Column Name Mismatch
+# Add Overview Tab to Airbus Dashboard
 
-## What Changed in the New File
-- The "UNDISCLOSED" metric issue is fixed -- all metrics are now properly labeled as "Orders", "Deliveries", or "Operational Fleet"
-- The column header changed from "No of Aircraft" to "No. of Aircraft" (with a period)
-- "UNDISCLOSED" now only appears as a customer/airline name, which is correct
+## Data Source
+The uploaded `Summary.xlsx` contains variant-level totals with 3 columns:
+- **Aircraft_Variant**: e.g., A220-100, A319ceo, A320neo, A350-900, A380
+- **Metric_Full**: Orders, Deliveries, In Fleet
+- **Units**: count
 
-## Required Changes
+This provides aggregated totals across all Airbus variants -- perfect for an Overview tab showing high-level KPIs and breakdowns.
 
-### 1. Replace the Excel file
-Copy the new `2._GPTWorldwide_Airline_Wise.xlsx` to `public/data/airbus-airline-fleet.xlsx`, overwriting the old file.
+## What Will Be Built
 
-### 2. Fix column name in `data.ts` (line ~498)
-The parser currently reads `r["No of Aircraft"]` but the new file uses `"No. of Aircraft"` (with a period). Update the column reference:
+### Overview Tab Content
+1. **3 KPI Cards**: Total Orders, Total Deliveries, Total In Fleet (clickable to navigate to respective tabs)
+2. **Grouped Bar Chart**: Orders vs Deliveries vs In Fleet by Aircraft Family (A220, A320 Family, A330, A340, A350, A380, A300/A310)
+3. **Donut Charts** (side by side): Orders by Family + Deliveries by Family
+4. **Variant-Level Table**: All variants with Orders, Deliveries, In Fleet columns
+5. **Footer**: Standard Stratview footer
 
-```text
-// Before
-const count = parseNum(r["No of Aircraft"]);
+### Files to Create/Modify
 
-// After  
-const count = parseNum(r["No. of Aircraft"] ?? r["No of Aircraft"]);
-```
+1. **Copy `Summary.xlsx` to `public/data/airbus-summary.xlsx`**
 
-Using a fallback ensures compatibility with both old and new file formats.
+2. **`src/dashboards/airbus-combined/config.ts`** -- Add `summaryDataUrl: "/data/airbus-summary.xlsx"`
 
-No other changes needed -- the `parseMetric()` function already handles "Operational Fleet" correctly via `lower.includes("operational")`, and the rest of the parsing logic remains valid.
+3. **`src/dashboards/airbus-combined/data.ts`** -- Add:
+   - `AirbusSummaryOverviewData` interface (totalOrders, totalDeliveries, totalInFleet, byFamily, byVariant)
+   - `parseSummaryOverviewExcel()` function to parse the 3-column file, group by family using existing `getFamily()` mapper
+   - `useAirbusSummaryOverview(url)` hook
 
-## Expected Result
-- All KPI totals will be correct (Deliveries will be significantly higher, properly exceeding Operational)
-- The grouped bar chart will show Deliveries >= Operational for all aircraft families including A320 Family
-- Donut charts and airline table will reflect accurate data
+4. **`src/dashboards/airbus-combined/OverviewTab.tsx`** (new file) -- Contains:
+   - KPI cards row (3 cards: Orders, Deliveries, In Fleet)
+   - Grouped bar chart by family (reuses existing `GroupedBarChart` from charts.tsx)
+   - Two donut charts side by side (reuses existing `SimpleDonutChart`)
+   - Variant detail table with search
+   - Loading/error states following existing patterns
+
+5. **`src/dashboards/airbus-combined/Dashboard.tsx`** -- Add Overview as the default/first tab, import OverviewTab
+
+### Technical Details
+
+- The "In Fleet" metric maps to "Operational" internally for consistency with existing naming
+- Family grouping reuses the existing `getFamily()` function in data.ts
+- Parser reads column `"Metric_Full"` and maps: "Orders" -> Orders, "Deliveries" -> Deliveries, "In Fleet" -> Operational
+- Column for count is `"Units"`
+- KPI cards will be clickable: Orders -> orders tab, Deliveries -> deliveries tab, In Fleet -> fleet tab (same pattern as Boeing overview)
+- Default active tab changes from "orders" to "overview"
 
