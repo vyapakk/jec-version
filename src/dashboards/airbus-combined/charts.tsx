@@ -3,7 +3,7 @@
  * Standalone — covers Orders tab charts.
  */
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { MousePointer2 } from "lucide-react";
 import {
@@ -222,6 +222,16 @@ export function YearlyDonutChart({ data, year, title, segments, metricLabel, onS
 interface DrillDownModalProps { state: DrillDownState; years: number[]; onClose: () => void; }
 
 export function DrillDownModal({ state, years, onClose }: DrillDownModalProps) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (state.isOpen) {
+      const timer = setTimeout(() => setReady(true), 150);
+      return () => clearTimeout(timer);
+    }
+    setReady(false);
+  }, [state.isOpen]);
+
   const dataYears = Object.keys(state.yearlyData).map(Number).filter(y => state.yearlyData[y] > 0);
   const minYear = Math.min(...dataYears); const maxYear = Math.max(...dataYears);
   const filteredData = years.filter(y => y >= minYear && y <= maxYear).map(year => ({ year, value: state.yearlyData[year] || 0 }));
@@ -230,14 +240,20 @@ export function DrillDownModal({ state, years, onClose }: DrillDownModalProps) {
     <Dialog open={state.isOpen} onOpenChange={open => { if (!open) onClose(); }}>
       <DialogContent className="aircraft-interiors-theme max-w-3xl bg-card border-border text-foreground">
         <DialogHeader><DialogTitle className="text-foreground flex items-center gap-2"><div className="h-3 w-3 rounded-full" style={{ backgroundColor: state.color }} />{state.segmentName} — {state.metricLabel} Trend</DialogTitle></DialogHeader>
-        <div className="h-[350px] w-full mt-4"><ResponsiveContainer width="100%" height="100%"><AreaChart data={filteredData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
-          <defs><linearGradient id="gradient-drilldown-airbus" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={state.color} stopOpacity={0.4} /><stop offset="95%" stopColor={state.color} stopOpacity={0} /></linearGradient></defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 18%)" />
-          <XAxis dataKey="year" stroke="hsl(215, 20%, 55%)" fontSize={11} tickLine={false} />
-          <YAxis stroke="hsl(215, 20%, 55%)" fontSize={11} tickLine={false} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v} width={50} />
-          <Tooltip formatter={(value: number) => [value.toLocaleString(), state.metricLabel]} contentStyle={{ backgroundColor: "hsl(222, 47%, 11%)", border: "1px solid hsl(217, 33%, 18%)", borderRadius: "8px", color: "hsl(210, 40%, 96%)" }} />
-          <Area type="monotone" dataKey="value" stroke={state.color} fill="url(#gradient-drilldown-airbus)" strokeWidth={3} dot={{ fill: state.color, r: 3 }} activeDot={{ r: 6 }} />
-        </AreaChart></ResponsiveContainer></div>
+        <div className="h-[350px] w-full mt-4">
+          {ready ? (
+            <ResponsiveContainer width="100%" height="100%"><AreaChart data={filteredData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+              <defs><linearGradient id="gradient-drilldown-airbus" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={state.color} stopOpacity={0.4} /><stop offset="95%" stopColor={state.color} stopOpacity={0} /></linearGradient></defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 18%)" />
+              <XAxis dataKey="year" stroke="hsl(215, 20%, 55%)" fontSize={11} tickLine={false} />
+              <YAxis stroke="hsl(215, 20%, 55%)" fontSize={11} tickLine={false} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v} width={50} />
+              <Tooltip formatter={(value: number) => [value.toLocaleString(), state.metricLabel]} contentStyle={{ backgroundColor: "hsl(222, 47%, 11%)", border: "1px solid hsl(217, 33%, 18%)", borderRadius: "8px", color: "hsl(210, 40%, 96%)" }} />
+              <Area type="monotone" dataKey="value" stroke={state.color} fill="url(#gradient-drilldown-airbus)" strokeWidth={3} dot={{ fill: state.color, r: 3 }} activeDot={{ r: 6 }} />
+            </AreaChart></ResponsiveContainer>
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">Loading chart…</div>
+          )}
+        </div>
         <div className="mt-2 max-h-[200px] overflow-y-auto"><DataTable headers={["Year", state.metricLabel]} rows={filteredData.map(d => [d.year, d.value.toLocaleString()])} /></div>
       </DialogContent>
     </Dialog>
