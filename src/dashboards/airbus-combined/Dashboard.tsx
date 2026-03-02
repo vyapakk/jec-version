@@ -13,6 +13,7 @@ import { config } from "./config";
 import { DashboardHeader, ScrollToTop } from "./layout";
 import { OrdersTab } from "./OrdersTab";
 import { DeliveriesTab } from "./DeliveriesTab";
+import { FleetTab } from "./FleetTab";
 
 const AirbusCombinedDashboard = () => {
   const navigate = useNavigate();
@@ -34,11 +35,13 @@ const AirbusCombinedDashboard = () => {
           <TabsList className="w-full justify-start bg-secondary/30 border border-border rounded-lg p-1 h-auto flex-wrap">
             <TabsTrigger value="orders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground px-4 py-2 text-sm font-medium">Orders</TabsTrigger>
             <TabsTrigger value="deliveries" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground px-4 py-2 text-sm font-medium">Deliveries</TabsTrigger>
+            <TabsTrigger value="fleet" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground px-4 py-2 text-sm font-medium">Airline Orders, Deliveries & Fleet</TabsTrigger>
             <TabsTrigger value="pending-orders" disabled className="text-muted-foreground/50 px-4 py-2 text-sm font-medium cursor-not-allowed">Pending Orders (Coming Soon)</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders"><OrdersTab /></TabsContent>
           <TabsContent value="deliveries"><DeliveriesTab /></TabsContent>
+          <TabsContent value="fleet"><FleetTab /></TabsContent>
           <TabsContent value="pending-orders"><div className="py-20 text-center text-muted-foreground">Pending Orders tab coming soon.</div></TabsContent>
         </Tabs>
       </main>

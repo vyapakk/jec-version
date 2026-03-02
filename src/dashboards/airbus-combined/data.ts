@@ -417,3 +417,183 @@ export function useChartDownload() {
   }, []);
   return { downloadChart };
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Airline Fleet Types & Parsing
+// ═══════════════════════════════════════════════════════════════
+
+export interface AirlineFleetRecord {
+  customer: string;
+  region: string;
+  variant: string;
+  metric: "Orders" | "Deliveries" | "Operational";
+  count: number;
+}
+
+export interface AirlineFleetVariantDetail {
+  variant: string;
+  orders: number;
+  deliveries: number;
+  operational: number;
+}
+
+export interface AirlineFleetSummary {
+  name: string;
+  region: string;
+  totalOrders: number;
+  totalDeliveries: number;
+  operational: number;
+  backlog: number;
+  variants: AirlineFleetVariantDetail[];
+}
+
+export interface AirlineFleetData {
+  totalOrders: number;
+  totalDeliveries: number;
+  totalOperational: number;
+  totalBacklog: number;
+  byFamily: Record<string, { orders: number; deliveries: number; operational: number }>;
+  byRegion: Record<string, { orders: number; deliveries: number; operational: number }>;
+  airlines: AirlineFleetSummary[];
+  families: string[];
+  regions: string[];
+  variants: string[];
+}
+
+const FAMILY_MAP: Record<string, string> = {};
+function getFamily(variant: string): string {
+  if (FAMILY_MAP[variant]) return FAMILY_MAP[variant];
+  const v = variant.toUpperCase();
+  if (v.includes("A220")) return "A220";
+  if (v.includes("A380")) return "A380";
+  if (v.includes("A350")) return "A350";
+  if (v.includes("A340")) return "A340";
+  if (v.includes("A330")) return "A330";
+  if (v.includes("A321") || v.includes("A320") || v.includes("A319") || v.includes("A318")) return "A320 Family";
+  if (v.includes("A310") || v.includes("A300")) return "A300/A310";
+  return variant;
+}
+
+function parseMetric(s: string): "Orders" | "Deliveries" | "Operational" | null {
+  const lower = s.toLowerCase();
+  if (lower.includes("order")) return "Orders";
+  if (lower.includes("deliver")) return "Deliveries";
+  if (lower.includes("operational")) return "Operational";
+  return null;
+}
+
+function parseFleetExcel(ab: ArrayBuffer): AirlineFleetData {
+  const wb = XLSX.read(ab, { type: "array" });
+  const sheetName = wb.SheetNames[0];
+  const sheet = wb.Sheets[sheetName];
+  if (!sheet) throw new Error("No sheet found in fleet data");
+  const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+
+  const records: AirlineFleetRecord[] = [];
+  for (const r of rows) {
+    const customer = String(r["Customer"] || "").trim();
+    const region = String(r["Region"] || "").trim();
+    const variant = String(r["Aircraft_Variant"] || "").trim();
+    const metricRaw = String(r["Metric_Full"] || "").trim();
+    const count = parseNum(r["No of Aircraft"]);
+    const metric = parseMetric(metricRaw);
+    if (!customer || !variant || !metric) continue;
+    records.push({ customer, region, variant, metric, count });
+  }
+
+  // Aggregations
+  let totalOrders = 0, totalDeliveries = 0, totalOperational = 0;
+  const byFamily: Record<string, { orders: number; deliveries: number; operational: number }> = {};
+  const byRegion: Record<string, { orders: number; deliveries: number; operational: number }> = {};
+  const variantSet = new Set<string>();
+  const regionSet = new Set<string>();
+
+  // Per-airline aggregation
+  const airlineMap = new Map<string, {
+    region: string;
+    totalOrders: number; totalDeliveries: number; operational: number;
+    variantMap: Map<string, { orders: number; deliveries: number; operational: number }>;
+  }>();
+
+  for (const rec of records) {
+    variantSet.add(rec.variant);
+    if (rec.region) regionSet.add(rec.region);
+    const family = getFamily(rec.variant);
+
+    // Totals
+    if (rec.metric === "Orders") totalOrders += rec.count;
+    else if (rec.metric === "Deliveries") totalDeliveries += rec.count;
+    else if (rec.metric === "Operational") totalOperational += rec.count;
+
+    // By family
+    if (!byFamily[family]) byFamily[family] = { orders: 0, deliveries: 0, operational: 0 };
+    if (rec.metric === "Orders") byFamily[family].orders += rec.count;
+    else if (rec.metric === "Deliveries") byFamily[family].deliveries += rec.count;
+    else if (rec.metric === "Operational") byFamily[family].operational += rec.count;
+
+    // By region
+    if (rec.region) {
+      if (!byRegion[rec.region]) byRegion[rec.region] = { orders: 0, deliveries: 0, operational: 0 };
+      if (rec.metric === "Orders") byRegion[rec.region].orders += rec.count;
+      else if (rec.metric === "Deliveries") byRegion[rec.region].deliveries += rec.count;
+      else if (rec.metric === "Operational") byRegion[rec.region].operational += rec.count;
+    }
+
+    // Per airline
+    let airline = airlineMap.get(rec.customer);
+    if (!airline) {
+      airline = { region: rec.region, totalOrders: 0, totalDeliveries: 0, operational: 0, variantMap: new Map() };
+      airlineMap.set(rec.customer, airline);
+    }
+    if (rec.metric === "Orders") airline.totalOrders += rec.count;
+    else if (rec.metric === "Deliveries") airline.totalDeliveries += rec.count;
+    else if (rec.metric === "Operational") airline.operational += rec.count;
+
+    let vd = airline.variantMap.get(rec.variant);
+    if (!vd) { vd = { orders: 0, deliveries: 0, operational: 0 }; airline.variantMap.set(rec.variant, vd); }
+    if (rec.metric === "Orders") vd.orders += rec.count;
+    else if (rec.metric === "Deliveries") vd.deliveries += rec.count;
+    else if (rec.metric === "Operational") vd.operational += rec.count;
+  }
+
+  const airlines: AirlineFleetSummary[] = [...airlineMap.entries()]
+    .map(([name, a]) => ({
+      name,
+      region: a.region,
+      totalOrders: a.totalOrders,
+      totalDeliveries: a.totalDeliveries,
+      operational: a.operational,
+      backlog: a.totalOrders - a.totalDeliveries,
+      variants: [...a.variantMap.entries()]
+        .map(([variant, v]) => ({ variant, ...v }))
+        .sort((a, b) => b.orders - a.orders),
+    }))
+    .sort((a, b) => b.totalOrders - a.totalOrders);
+
+  const families = Object.keys(byFamily).sort();
+  const regions = [...regionSet].sort();
+  const variants = [...variantSet].sort();
+
+  return {
+    totalOrders, totalDeliveries, totalOperational,
+    totalBacklog: totalOrders - totalDeliveries,
+    byFamily, byRegion, airlines, families, regions, variants,
+  };
+}
+
+export function useAirlineFleetData(url: string) {
+  const [data, setData] = useState<AirlineFleetData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const fetchData = useCallback(async () => {
+    setIsLoading(true); setError(null);
+    try {
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) throw new Error(`Failed to fetch: ${resp.statusText}`);
+      setData(parseFleetExcel(await resp.arrayBuffer()));
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to load data"); }
+    finally { setIsLoading(false); }
+  }, [url]);
+  useEffect(() => { fetchData(); }, [fetchData]);
+  return { data, isLoading, error, refetch: fetchData };
+}
