@@ -1,5 +1,6 @@
 export const config = {
   dataUrl: "/data/airbus-orders.xlsx",
+  deliveriesDataUrl: "/data/airbus-deliveries.xlsx",
   title: "Airbus Commercial Aircraft Orders & Deliveries",
   subtitle: "Comprehensive Orders, Deliveries & Backlog Dashboard",
   routePath: "/dashboard/airbus-combined",
