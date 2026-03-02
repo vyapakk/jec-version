@@ -1,7 +1,7 @@
 /**
  * Commercial Aircraft Orders & Deliveries — Combined Dashboard.
- * Wraps Airbus and Boeing dashboards as top-level OEM tabs.
- * Fully standalone. Does NOT modify any existing dashboard files.
+ * 100% STANDALONE. Zero imports from airbus-combined/ or boeing-combined/.
+ * All components are internalized within this folder.
  */
 
 import { useState } from "react";
@@ -11,21 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { config } from "./config";
+import { boeingConfig } from "./boeing-config";
 import { DashboardHeader, ScrollToTop } from "./layout";
 
-// ── Airbus tab components (imported as-is, zero modifications) ──
-import { OverviewTab as AirbusOverviewTab } from "../airbus-combined/OverviewTab";
-import { OrdersTab as AirbusOrdersTab } from "../airbus-combined/OrdersTab";
-import { DeliveriesTab as AirbusDeliveriesTab } from "../airbus-combined/DeliveriesTab";
-import { FleetTab as AirbusFleetTab } from "../airbus-combined/FleetTab";
+// ── Airbus tab components (internalized) ──
+import { AirbusOverviewTab } from "./airbus-OverviewTab";
+import { AirbusOrdersTab } from "./airbus-OrdersTab";
+import { AirbusDeliveriesTab } from "./airbus-DeliveriesTab";
+import { AirbusFleetTab } from "./airbus-FleetTab";
 
-// ── Boeing tab components (imported as-is, zero modifications) ──
-import { OverviewTabContent as BoeingOverviewContent, OverviewTabLoading as BoeingOverviewLoading, OverviewTabError as BoeingOverviewError } from "../boeing-combined/OverviewTab";
-import { GrossOrdersTab as BoeingGrossOrdersTab } from "../boeing-combined/GrossOrdersTab";
-import { DeliveriesTab as BoeingDeliveriesTab } from "../boeing-combined/DeliveriesTab";
-import { PendingOrdersTab as BoeingPendingOrdersTab } from "../boeing-combined/PendingOrdersTab";
-import { useCombinedData } from "../boeing-combined/data";
-import { config as boeingConfig } from "../boeing-combined/config";
+// ── Boeing tab components (internalized) ──
+import { BoeingOverviewContent, BoeingOverviewLoading, BoeingOverviewError } from "./boeing-OverviewTab";
+import { BoeingGrossOrdersTab } from "./boeing-GrossOrdersTab";
+import { BoeingDeliveriesTab } from "./boeing-DeliveriesTab";
+import { BoeingPendingOrdersTab } from "./boeing-PendingOrdersTab";
+import { useCombinedData } from "./boeing-data";
 
 /* ------------------------------------------------------------------ */
 
