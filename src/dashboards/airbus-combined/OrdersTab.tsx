@@ -43,19 +43,10 @@ export function OrdersTab() {
     return filteredYears.reduce((sum, y) => sum + (data.summary.netOrderByYear[y] || 0), 0);
   }, [data, filteredYears]);
 
-  const rangeCustomers = useMemo(() => {
+  const totalCustomers = useMemo(() => {
     if (!data) return 0;
-    const detailYearsInRange = filteredYears.filter(y => data.detailYears.includes(y));
-    if (detailYearsInRange.length === 0) return 0;
-    return new Set(data.details.filter(d => detailYearsInRange.includes(d.year)).map(d => d.customer)).size;
-  }, [data, filteredYears]);
-
-  const customerDataPartial = useMemo(() => {
-    if (!data) return false;
-    const detailMin = data.detailYears[0] || Infinity;
-    const detailMax = data.detailYears[data.detailYears.length - 1] || -Infinity;
-    return fromYear < detailMin || toYear > detailMax;
-  }, [data, fromYear, toYear]);
+    return new Set(data.details.map(d => d.customer)).size;
+  }, [data]);
 
   // Donut data
   const donutData = useMemo(() => {
@@ -89,10 +80,7 @@ export function OrdersTab() {
   // Filtered customers for table (from detail data, filtered by year range)
   const filteredCustomers = useMemo(() => {
     if (!data) return [];
-    const detailYearsInRange = filteredYears.filter(y => data.detailYears.includes(y));
-    if (detailYearsInRange.length === 0) return [];
-
-    // Build customer summaries for the filtered range
+    // Build customer summaries across ALL detail years (static)
     const custMap = new Map<string, {
       totalOrders: number; firstYear: number; lastYear: number;
       models: Set<string>;
@@ -100,7 +88,6 @@ export function OrdersTab() {
     }>();
 
     for (const d of data.details) {
-      if (!detailYearsInRange.includes(d.year)) continue;
       let c = custMap.get(d.customer);
       if (!c) {
         c = { totalOrders: 0, firstYear: d.year, lastYear: d.year, models: new Set(), orderDetails: [] };
@@ -133,7 +120,7 @@ export function OrdersTab() {
     }
 
     return customers;
-  }, [data, filteredYears, customerSearch]);
+  }, [data, customerSearch]);
 
   const displayedCustomers = showAllCustomers ? filteredCustomers : filteredCustomers.slice(0, 25);
 
@@ -155,12 +142,11 @@ export function OrdersTab() {
         <KPICard title="Total Lifetime Gross Orders" value={data.summary.totalLifetimeGross} icon={Plane} accentColor="primary" delay={0.1} />
         <KPICard title={`Gross Orders in ${rangeLabel}`} value={rangeGross} icon={TrendingUp} accentColor="accent" delay={0.2} />
         <KPICard
-          title={`Customers in ${rangeLabel}`}
-          value={rangeCustomers}
+          title="Total Customers (2021–2026)"
+          value={totalCustomers}
           icon={Users}
           accentColor="chart-4"
           delay={0.3}
-          subtitle={rangeCustomers === 0 ? "Customer data: 2021–2026 only" : undefined}
         />
         <KPICard title={`Net Orders (Yr of Cancellation)`} value={rangeNetCancel} icon={MinusCircle} accentColor="chart-3" delay={0.4} subtitle={rangeLabel} />
         <KPICard title={`Net Orders (Yr of Order)`} value={rangeNetOrder} icon={FileCheck} accentColor="primary" delay={0.5} subtitle={rangeLabel} />
@@ -228,8 +214,7 @@ export function OrdersTab() {
           <div>
             <h2 className="text-xl font-semibold text-foreground">Customer Orders</h2>
             <p className="text-sm text-muted-foreground">
-              {filteredCustomers.length} customers found
-              {customerDataPartial && " (customer data available for 2021–2026 only)"}
+              {filteredCustomers.length} customers found · Customer data from 2021–2026
             </p>
           </div>
           <div className="relative w-full sm:w-[320px]">
