@@ -198,6 +198,171 @@ export function useAirbusOrderData(url: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Delivery Types & Parsing
+// ═══════════════════════════════════════════════════════════════
+
+export interface AirbusDeliverySummaryData {
+  years: number[];
+  programs: string[];
+  totalLifetime: number;
+  deliveriesByYear: Record<number, number>;
+  deliveriesByYearByProgram: Record<string, Record<number, number>>;
+}
+
+export interface AirbusDeliveryRecord {
+  year: number;
+  deliveryDate: string;
+  customer: string;
+  region: string;
+  aircraftModel: string;
+  quantity: number;
+}
+
+export interface AirbusDeliveryCustomerSummary {
+  name: string;
+  totalDeliveries: number;
+  firstYear: number;
+  lastYear: number;
+  region: string;
+  models: string[];
+  deliveryDetails: { year: number; deliveryDate: string; aircraftModel: string; region: string; quantity: number }[];
+}
+
+export interface AirbusDeliveryData {
+  summary: AirbusDeliverySummaryData;
+  details: AirbusDeliveryRecord[];
+  detailYears: number[];
+  customers: AirbusDeliveryCustomerSummary[];
+  regions: string[];
+  deliveriesByYearByRegion: Record<string, Record<number, number>>;
+}
+
+function parseDeliverySummarySheet(wb: XLSX.WorkBook): AirbusDeliverySummaryData {
+  const sheet = wb.Sheets["Deliveries Summary"];
+  if (!sheet) throw new Error("Sheet 'Deliveries Summary' not found");
+  const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+
+  const deliveriesByYear: Record<number, number> = {};
+  const deliveriesByYearByProgram: Record<string, Record<number, number>> = {};
+  const yearSet = new Set<number>();
+  const programSet = new Set<string>();
+
+  for (const r of rows) {
+    const year = parseNum(r["Year"]);
+    const program = String(r["Aircraft Family"] || "").trim();
+    const deliveries = parseNum(r["Deliveries"]);
+    if (!year || !program) continue;
+
+    yearSet.add(year);
+    programSet.add(program);
+    deliveriesByYear[year] = (deliveriesByYear[year] || 0) + deliveries;
+    if (!deliveriesByYearByProgram[program]) deliveriesByYearByProgram[program] = {};
+    deliveriesByYearByProgram[program][year] = (deliveriesByYearByProgram[program][year] || 0) + deliveries;
+  }
+
+  const years = [...yearSet].sort((a, b) => a - b);
+  const programs = [...programSet].sort();
+  const totalLifetime = years.reduce((s, y) => s + (deliveriesByYear[y] || 0), 0);
+
+  return { years, programs, totalLifetime, deliveriesByYear, deliveriesByYearByProgram };
+}
+
+function parseAllDeliveriesSheet(wb: XLSX.WorkBook): {
+  details: AirbusDeliveryRecord[];
+  detailYears: number[];
+  customers: AirbusDeliveryCustomerSummary[];
+  regions: string[];
+  deliveriesByYearByRegion: Record<string, Record<number, number>>;
+} {
+  const sheet = wb.Sheets["All Deliveries"];
+  if (!sheet) return { details: [], detailYears: [], customers: [], regions: [], deliveriesByYearByRegion: {} };
+  const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+
+  const details: AirbusDeliveryRecord[] = rows
+    .filter(r => r["Year"] && r["Quantity"])
+    .map(r => ({
+      year: parseNum(r["Year"]),
+      deliveryDate: r["Delivery Date"] ? formatExcelDate(r["Delivery Date"]) : "",
+      customer: String(r["Customer"] || "").trim(),
+      region: String(r["Region"] || "").trim(),
+      aircraftModel: String(r["Aircraft Model"] || "").trim(),
+      quantity: parseNum(r["Quantity"]),
+    }))
+    .filter(d => d.year > 0 && d.quantity > 0);
+
+  const detailYears = [...new Set(details.map(d => d.year))].sort((a, b) => a - b);
+
+  // Region aggregation
+  const regionSet = new Set<string>();
+  const deliveriesByYearByRegion: Record<string, Record<number, number>> = {};
+  for (const d of details) {
+    if (!d.region) continue;
+    regionSet.add(d.region);
+    if (!deliveriesByYearByRegion[d.region]) deliveriesByYearByRegion[d.region] = {};
+    deliveriesByYearByRegion[d.region][d.year] = (deliveriesByYearByRegion[d.region][d.year] || 0) + d.quantity;
+  }
+  const regions = [...regionSet].sort();
+
+  // Customer summaries
+  const custMap = new Map<string, {
+    totalDeliveries: number; firstYear: number; lastYear: number;
+    region: string; models: Set<string>;
+    deliveryDetails: { year: number; deliveryDate: string; aircraftModel: string; region: string; quantity: number }[];
+  }>();
+
+  for (const d of details) {
+    let c = custMap.get(d.customer);
+    if (!c) {
+      c = { totalDeliveries: 0, firstYear: d.year, lastYear: d.year, region: d.region, models: new Set(), deliveryDetails: [] };
+      custMap.set(d.customer, c);
+    }
+    c.totalDeliveries += d.quantity;
+    c.firstYear = Math.min(c.firstYear, d.year);
+    c.lastYear = Math.max(c.lastYear, d.year);
+    c.models.add(d.aircraftModel);
+    c.deliveryDetails.push({ year: d.year, deliveryDate: d.deliveryDate, aircraftModel: d.aircraftModel, region: d.region, quantity: d.quantity });
+  }
+
+  const customers: AirbusDeliveryCustomerSummary[] = [...custMap.entries()]
+    .map(([name, c]) => ({
+      name,
+      totalDeliveries: c.totalDeliveries,
+      firstYear: c.firstYear,
+      lastYear: c.lastYear,
+      region: c.region,
+      models: [...c.models],
+      deliveryDetails: c.deliveryDetails.sort((a, b) => a.year - b.year),
+    }))
+    .sort((a, b) => b.totalDeliveries - a.totalDeliveries);
+
+  return { details, detailYears, customers, regions, deliveriesByYearByRegion };
+}
+
+function parseDeliveryExcel(ab: ArrayBuffer): AirbusDeliveryData {
+  const wb = XLSX.read(ab, { type: "array" });
+  const summary = parseDeliverySummarySheet(wb);
+  const { details, detailYears, customers, regions, deliveriesByYearByRegion } = parseAllDeliveriesSheet(wb);
+  return { summary, details, detailYears, customers, regions, deliveriesByYearByRegion };
+}
+
+export function useAirbusDeliveryData(url: string) {
+  const [data, setData] = useState<AirbusDeliveryData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const fetchData = useCallback(async () => {
+    setIsLoading(true); setError(null);
+    try {
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) throw new Error(`Failed to fetch: ${resp.statusText}`);
+      setData(parseDeliveryExcel(await resp.arrayBuffer()));
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to load data"); }
+    finally { setIsLoading(false); }
+  }, [url]);
+  useEffect(() => { fetchData(); }, [fetchData]);
+  return { data, isLoading, error, refetch: fetchData };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // DrillDown hook
 // ═══════════════════════════════════════════════════════════════
 
