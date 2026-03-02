@@ -597,3 +597,89 @@ export function useAirlineFleetData(url: string) {
   useEffect(() => { fetchData(); }, [fetchData]);
   return { data, isLoading, error, refetch: fetchData };
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Summary Overview Types & Parsing (GPTSummary.xlsx)
+// ═══════════════════════════════════════════════════════════════
+
+export interface AirbusSummaryVariant {
+  variant: string;
+  family: string;
+  orders: number;
+  deliveries: number;
+  operational: number;
+}
+
+export interface AirbusSummaryOverviewData {
+  totalOrders: number;
+  totalDeliveries: number;
+  totalInFleet: number;
+  byFamily: Record<string, { orders: number; deliveries: number; operational: number }>;
+  byVariant: AirbusSummaryVariant[];
+  families: string[];
+}
+
+function parseSummaryOverviewExcel(ab: ArrayBuffer): AirbusSummaryOverviewData {
+  const wb = XLSX.read(ab, { type: "array" });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  if (!sheet) throw new Error("No sheet found in summary data");
+  const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+
+  // Group by variant
+  const variantMap = new Map<string, { orders: number; deliveries: number; operational: number }>();
+
+  for (const r of rows) {
+    const variant = String(r["Aircraft_Variant"] || "").trim();
+    const metricRaw = String(r["Metric_Full"] || "").trim();
+    const units = parseNum(r["Units"]);
+    if (!variant || !metricRaw) continue;
+
+    let entry = variantMap.get(variant);
+    if (!entry) { entry = { orders: 0, deliveries: 0, operational: 0 }; variantMap.set(variant, entry); }
+
+    const lower = metricRaw.toLowerCase();
+    if (lower === "orders") entry.orders += units;
+    else if (lower === "deliveries") entry.deliveries += units;
+    else if (lower.includes("fleet")) entry.operational += units;
+  }
+
+  let totalOrders = 0, totalDeliveries = 0, totalInFleet = 0;
+  const byFamily: Record<string, { orders: number; deliveries: number; operational: number }> = {};
+  const byVariant: AirbusSummaryVariant[] = [];
+
+  for (const [variant, v] of variantMap) {
+    const family = getFamily(variant);
+    totalOrders += v.orders;
+    totalDeliveries += v.deliveries;
+    totalInFleet += v.operational;
+
+    if (!byFamily[family]) byFamily[family] = { orders: 0, deliveries: 0, operational: 0 };
+    byFamily[family].orders += v.orders;
+    byFamily[family].deliveries += v.deliveries;
+    byFamily[family].operational += v.operational;
+
+    byVariant.push({ variant, family, ...v });
+  }
+
+  byVariant.sort((a, b) => b.orders - a.orders);
+  const families = Object.keys(byFamily).sort();
+
+  return { totalOrders, totalDeliveries, totalInFleet, byFamily, byVariant, families };
+}
+
+export function useAirbusSummaryOverview(url: string) {
+  const [data, setData] = useState<AirbusSummaryOverviewData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const fetchData = useCallback(async () => {
+    setIsLoading(true); setError(null);
+    try {
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) throw new Error(`Failed to fetch: ${resp.statusText}`);
+      setData(parseSummaryOverviewExcel(await resp.arrayBuffer()));
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to load data"); }
+    finally { setIsLoading(false); }
+  }, [url]);
+  useEffect(() => { fetchData(); }, [fetchData]);
+  return { data, isLoading, error, refetch: fetchData };
+}
