@@ -1,74 +1,78 @@
 
+# Airline Orders, Deliveries & Fleet Tab
 
-# Airbus Deliveries Tab
+## Data Structure
+Single sheet with cumulative (non-yearly) data:
+- **Columns**: Customer, Region, Aircraft_Variant, Metric_Full (Orders / Deliveries / Operational), No of Aircraft
+- **~2,975 rows** covering ~400+ airlines across ~20 aircraft variants, 7 regions, and 3 metrics
+- No time-series -- these are lifetime totals per airline per variant
 
-## Data Summary
+## Tab Layout
 
-**Sheet 1 "Deliveries Summary"** — yearly program-level totals (2006-2026):
-- 3 columns: Year, Aircraft Family, Deliveries
-- 7 aircraft families: A220, A320Family, A330, A340, A350, A380, A310/A300-600
+### KPI Cards (4)
+1. **Total Orders** -- sum of all "Orders" rows
+2. **Total Deliveries** -- sum of all "Deliveries" rows
+3. **Operational Fleet** -- sum of all "Operational" rows
+4. **Backlog** -- Orders minus Deliveries (unfulfilled)
 
-**Sheet 2 "All Deliveries"** — customer-level detail (2021-2026):
-- 6 columns: Year, Delivery Date, Customer, Region, Aircraft Model, Quantity
-- Regions available: North America, Europe and CIS, Asia-Pacific, Middle East, Africa, Latin America & Caribbean, Undisclosed
-- Note: Unlike orders, deliveries detail includes **Region** data, enabling region-based charts
+### Charts (no year range selector needed -- this is snapshot data)
 
-## What Will Be Built
+**Stacked/Grouped Bar Chart: Orders vs Deliveries vs Operational by Aircraft Family**
+- Group variants into families (A220, A320Family, A330, A340, A350, A380)
+- Three bars per family showing Orders, Deliveries, Operational side by side
 
-### Tab Content
+**Donut Charts (3)**
+- Orders Distribution by Aircraft Variant
+- Deliveries Distribution by Region
+- Operational Fleet by Region
 
-**KPI Cards (4):**
-1. Total Lifetime Deliveries (sum across all years from summary sheet)
-2. Deliveries in selected range (from summary sheet, responds to year selector)
-3. Unique Customers (static, all 2021-2026 from detail sheet -- matching the Orders tab pattern)
-4. Aircraft Programs Active in range
+**Horizontal Bar Chart: Top 20 Airlines by Fleet Size (Operational)**
+- Shows the biggest operators
 
-**Charts (respond to year range selector):**
-- Trend Line Chart: Total deliveries over time (2006-2026 from summary)
-- Multi-Line Chart: Deliveries by Aircraft Program (A220, A320Family, etc.)
-- Multi-Line Chart: Deliveries by Region (only for years with detail data, 2021-2026)
+### Airline Table (searchable, sortable)
+- Columns: Airline, Region, Total Orders, Total Deliveries, Operational Fleet, Backlog, Variants
+- Click-to-expand detail dialog showing per-variant breakdown (Orders/Deliveries/Operational per aircraft variant for that airline)
+- Searchable by airline name, region, or variant
 
-**Donut Charts (for selected range):**
-- By Aircraft Program (from summary data, available for all years)
-- By Region (from detail data, only meaningful for 2021-2026)
+## Technical Changes
 
-**Customer Table (static, all 2021-2026):**
-- Searchable, sortable table with: Customer, Region, Total Deliveries, Years Active, Models
-- Click-to-expand detail dialog showing individual delivery lines with dates, aircraft model, region, quantity
-- Same static behavior as Orders tab (does not filter by year selector)
+### 1. Copy Excel file
+Copy `GPTWorldwide_Airline_Wise.xlsx` to `public/data/airbus-airline-fleet.xlsx`
 
-### File Changes
+### 2. Update `config.ts`
+Add `airlineFleetDataUrl: "/data/airbus-airline-fleet.xlsx"`
 
-**1. Copy Excel file**
-- Copy `Deliveries_Final.xlsx` to `public/data/airbus-deliveries.xlsx`
+### 3. Update `data.ts` -- add new types and parser
 
-**2. Update `src/dashboards/airbus-combined/config.ts`**
-- Add `deliveriesDataUrl` pointing to the new Excel file
+New types:
+```text
+AirlineFleetRecord     -- raw row: customer, region, variant, metric, count
+AirlineFleetSummary    -- per-airline aggregate: name, region, totalOrders, totalDeliveries, operational, backlog, variants[]
+AirlineFleetData       -- full parsed result with aggregations by variant, region, metric
+```
 
-**3. Update `src/dashboards/airbus-combined/data.ts`**
-- Add new types: `AirbusDeliverySummaryData`, `AirbusDeliveryRecord`, `AirbusDeliveryCustomerSummary`, `AirbusDeliveryData`
-- Add parser for "Deliveries Summary" sheet (columns: Year, Aircraft Family, Deliveries)
-- Add parser for "All Deliveries" sheet (columns: Year, Delivery Date, Customer, Region, Aircraft Model, Quantity)
-- Build aggregations: `deliveriesByYear`, `deliveriesByYearByProgram`, `deliveriesByYearByRegion` (from detail sheet)
-- Build customer summaries with region info
-- Add `useAirbusDeliveryData(url)` hook
+New parser reads the single sheet, builds:
+- `byVariant`: Record<variant, Record<metric, number>> for bar charts
+- `byRegion`: Record<region, Record<metric, number>> for donut charts
+- `airlines`: AirlineFleetSummary[] for the table
+- Totals for KPIs
 
-**4. Create `src/dashboards/airbus-combined/DeliveriesTab.tsx`**
-- Mirror the OrdersTab structure but adapted for deliveries:
-  - 4 KPI cards
-  - Trend line for total deliveries
-  - Multi-line by Aircraft Program
-  - Multi-line by Region (note: only 2021-2026 data)
-  - Donut by Program + Donut by Region
-  - Static customer table with click-to-open detail dialog
-  - Region column in customer table and detail dialog (unlike Orders which has no region)
+New hook: `useAirlineFleetData(url)`
 
-**5. Update `src/dashboards/airbus-combined/Dashboard.tsx`**
-- Import and wire up `DeliveriesTab` component
-- Enable the "Deliveries" tab (remove `disabled` and "Coming Soon")
+### 4. Create `FleetTab.tsx`
+New component following the same patterns as OrdersTab/DeliveriesTab:
+- No year range selector (data is cumulative snapshot)
+- KPI cards, grouped bar chart, donut charts, top airlines bar chart
+- Searchable airline table with detail dialog
+- Reuses existing chart components where possible; adds a new `GroupedBarChart` component for the Orders/Deliveries/Operational comparison
 
-## Key Design Decisions
-- Customer table is static (all 2021-2026) matching the pattern established for Orders
-- Region-based charts use detail data (2021-2026 only); a note will indicate this when the year range extends beyond
-- Summary data drives program-level charts for the full 2006-2026 range
-- Region breakdown from detail data builds `deliveriesByYearByRegion` for multi-line and donut charts
+### 5. Add `GroupedBarChart` to `charts.tsx`
+New chart component for side-by-side comparison of 3 metrics across aircraft families. Uses Recharts `BarChart` with grouped `Bar` elements.
+
+### 6. Add `HorizontalBarChart` to `charts.tsx`
+For the Top 20 Airlines ranking visualization.
+
+### 7. Update `Dashboard.tsx`
+- Import `FleetTab`
+- Add "Airline Orders, Deliveries & Fleet" tab (enable it, remove disabled state from pending orders or add as 3rd tab)
+- Keep "Pending Orders (Coming Soon)" as the 4th tab
