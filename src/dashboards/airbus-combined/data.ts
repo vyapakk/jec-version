@@ -495,7 +495,7 @@ function parseFleetExcel(ab: ArrayBuffer): AirlineFleetData {
     const region = String(r["Region"] || "").trim();
     const variant = String(r["Aircraft_Variant"] || "").trim();
     const metricRaw = String(r["Metric_Full"] || "").trim();
-    const count = parseNum(r["No of Aircraft"]);
+    const count = parseNum(r["No. of Aircraft"] ?? r["No of Aircraft"]);
     const metric = parseMetric(metricRaw);
     if (!customer || !variant || !metric) continue;
     records.push({ customer, region, variant, metric, count });
