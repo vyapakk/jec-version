@@ -668,12 +668,35 @@ export function StackedBarChart({ data, year, title, subtitle, segmentColors, se
     return null;
   };
 
+  const handleBarClick = (segmentName: string, segmentIndex: number, entry: any) => {
+    if (onSegmentClick) {
+      const value = entry[segmentName];
+      const fullData = entry[`${segmentName}_fullData`];
+      onSegmentClick(entry.name, segmentName, value, segmentColors[segmentIndex % segmentColors.length], fullData);
+    }
+  };
+
+  const renderLegend = () => (
+    <div className="mt-3 sm:mt-4 flex flex-wrap justify-center gap-x-3 gap-y-1.5 sm:gap-4">
+      {segmentNames.map((name, index) => (
+        <div key={name} className="flex items-center gap-1.5 sm:gap-2">
+          <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-sm flex-shrink-0" style={{ backgroundColor: segmentColors[index % segmentColors.length] }} />
+          <span className="text-xs sm:text-sm text-muted-foreground">{name}</span>
+        </div>
+      ))}
+    </div>
+  );
+
   const tableHeaders = ["Category", ...segmentNames, "Total"];
-  const tableRows = data.map((bar) => [bar.name, ...bar.segments.map((seg) => fmtVal(seg.value, unit)), fmtVal(bar.total, unit)]);
+  const tableRows = data.map((bar) => [
+    bar.name,
+    ...segmentNames.map((segName) => { const seg = bar.segments.find((s) => s.name === segName); return fmtVal(seg?.value ?? 0, unit); }),
+    fmtVal(bar.total, unit),
+  ]);
 
   return (
-    <motion.div ref={chartRef} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="rounded-xl border border-border bg-card p-3 sm:p-6">
-      <div className="mb-6 flex items-start justify-between">
+    <motion.div ref={chartRef} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="rounded-xl border border-border bg-card p-4 sm:p-6 overflow-hidden">
+      <div className="mb-4 flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
@@ -686,36 +709,28 @@ export function StackedBarChart({ data, year, title, subtitle, segmentColors, se
       <AnimatedViewSwitch view={view}
         chart={
           <>
-            <div className="h-[350px] w-full -mx-2 sm:mx-0">
+            <div style={{ height: `${Math.max(200, chartData.length * 50)}px` }} className="w-full -mx-4 sm:mx-0 overflow-x-auto overflow-y-hidden">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 15, left: 5, bottom: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 18%)" />
-                  <XAxis dataKey="name" stroke="hsl(215, 20%, 55%)" fontSize={10} tickLine={false} angle={-35} textAnchor="end" interval={0} height={80} />
-                  <YAxis stroke="hsl(215, 20%, 55%)" fontSize={12} tickLine={false} tickFormatter={(value) => fmtAxis(value, unit)} width={70} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                  {segmentNames.map((name, idx) => (
-                    <Bar key={name} dataKey={name} stackId="a" fill={segmentColors[idx % segmentColors.length]}
-                      onMouseEnter={(_, barIndex) => setActiveSegment({ barIndex, segmentIndex: idx, segmentName: name })}
-                      onMouseLeave={() => setActiveSegment(null)}
-                      onClick={(entry: any) => {
-                        if (onSegmentClick) {
-                          const fullData = entry[`${name}_fullData`];
-                          onSegmentClick(entry.name, name, entry[name], segmentColors[idx % segmentColors.length], fullData);
-                        }
-                      }}
-                      style={{ cursor: onSegmentClick ? "pointer" : "default" }} />
+                <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 10, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis type="number" tickFormatter={(value) => fmtAxis(value, unit)} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={{ stroke: "hsl(var(--border))" }} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={{ stroke: "hsl(var(--border))" }} width={95} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted)/0.1)" }} wrapperStyle={{ zIndex: 50, maxWidth: "90vw", pointerEvents: "none" }} />
+                  {segmentNames.map((segmentName, index) => (
+                    <Bar key={segmentName} dataKey={segmentName} stackId="stack" fill={segmentColors[index % segmentColors.length]}
+                      radius={index === segmentNames.length - 1 ? [0, 4, 4, 0] : [0, 0, 0, 0]}
+                      onClick={(entry) => handleBarClick(segmentName, index, entry)} style={{ cursor: onSegmentClick ? "pointer" : "default" }}>
+                      {chartData.map((_, barIndex) => (
+                        <Cell key={`${segmentName}-${barIndex}`} fill={segmentColors[index % segmentColors.length]}
+                          opacity={activeSegment === null ? 1 : activeSegment.barIndex === barIndex && activeSegment.segmentIndex === index ? 1 : 0.6}
+                          onMouseEnter={() => setActiveSegment({ barIndex, segmentIndex: index, segmentName })} onMouseLeave={() => setActiveSegment(null)} />
+                      ))}
+                    </Bar>
                   ))}
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-4 flex flex-wrap justify-center gap-3">
-              {segmentNames.map((name, idx) => (
-                <div key={name} className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: segmentColors[idx % segmentColors.length] }} />
-                  <span className="text-xs text-muted-foreground">{name}</span>
-                </div>
-              ))}
-            </div>
+            {renderLegend()}
           </>
         }
         table={<DataTable headers={tableHeaders} rows={tableRows} />}
