@@ -14,7 +14,7 @@ import MyAccount from "./pages/MyAccount";
 import Terms from "./pages/Terms";
 import Disclaimer from "./pages/Disclaimer";
 import NotFound from "./pages/NotFound";
-import TempXlsxReader from "./temp-xlsx-reader";
+
 
 const queryClient = new QueryClient();
 
@@ -38,7 +38,7 @@ const App = () => (
           {dashboardRegistry.map(({ routePath, component: Component }) => (
             <Route key={routePath} path={routePath} element={<Component />} />
           ))}
-          <Route path="/temp-xlsx" element={<TempXlsxReader />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
