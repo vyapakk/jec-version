@@ -14,7 +14,7 @@ export const config = {
   tabs: [
     { id: "overview", label: "Market Overview", icon: BarChart3 },
     { id: "endUser", label: "End-Use Industry", icon: Users },
-    { id: "aircraft", label: "Resin Sub-Type", icon: Beaker },
+    { id: "aircraft", label: "Resin Type", icon: Beaker },
     { id: "application", label: "Prepreg Type", icon: Layers },
     { id: "process", label: "Process Type", icon: Cog },
     { id: "region", label: "Region", icon: Globe },
@@ -28,7 +28,7 @@ export const config = {
   },
   segmentMapping: {
     endUser:     { dataKey: "endUser",            title: "End-Use Industry" },
-    aircraft:    { dataKey: "aircraftType",       title: "Resin Sub-Type" },
+    aircraft:    { dataKey: "aircraftType",       title: "Resin Type" },
     region:      { dataKey: "region",             title: "Region" },
     application: { dataKey: "application",        title: "Prepreg Type" },
     process:     { dataKey: "processType",        title: "Process Type" },

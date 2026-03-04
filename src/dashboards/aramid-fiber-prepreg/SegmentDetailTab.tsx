@@ -1,5 +1,5 @@
 /**
- * Segment Detail Tab — Glass Fiber Prepreg.
+ * Segment Detail Tab — Aramid Fiber Prepreg.
  */
 
 import { DollarSign, TrendingUp, BarChart3 } from "lucide-react";
@@ -58,6 +58,9 @@ export function SegmentDetailTab({ segmentType, segmentData, totalMarket, market
   const applicationByRegionData = segmentType === "application" ? buildByNestedData(marketData.application, marketData.applicationByRegion) : [];
   const processTypeByRegionData = segmentType === "process" ? buildByNestedData(marketData.processType || [], marketData.processTypeByRegion) : [];
 
+  // Bifurcation data for Resin Type tab
+  const bifurcationData = segmentType === "aircraft" ? buildByNestedData(marketData.aircraftType, marketData.endUserByAircraftType) : [];
+
   const regionByEndUserData = segmentType === "region" ? marketData.region.map((region) => {
     const segments = endUserNames.map((euName) => {
       const d = marketData.endUserByRegion?.[euName]?.find(r => r.name === region.name);
@@ -96,7 +99,11 @@ export function SegmentDetailTab({ segmentType, segmentData, totalMarket, market
   const getRelatedSegmentsForDrillDown = (segmentName: string) => {
     if (segmentType === "region" && marketData.countryDataByRegion[segmentName])
       return { title: `Countries in ${segmentName}`, data: marketData.countryDataByRegion[segmentName] };
-    if (segmentType === "aircraft") return { title: "Regions", data: marketData.region };
+    if (segmentType === "aircraft") {
+      const bifurcation = marketData.endUserByAircraftType?.[segmentName];
+      if (bifurcation && bifurcation.length > 0) return { title: `${segmentName} Bifurcation`, data: bifurcation };
+      return { title: "Regions", data: marketData.region };
+    }
     if (segmentType === "endUser") return { title: "Regions", data: marketData.region };
     if (segmentType === "application") return { title: "Regions", data: marketData.region };
     if (segmentType === "process") {
@@ -112,6 +119,17 @@ export function SegmentDetailTab({ segmentType, segmentData, totalMarket, market
   const handleTableRowClick = (name: string, data: YearlyData[], color: string) => openDrillDown(name, data, color, getRelatedSegmentsForDrillDown(name));
   const handleStackedBarClick = (endUserType: string, segmentName: string, _value: number, color: string, fullData?: YearlyData[]) => {
     if (fullData) openDrillDown(`${segmentName} (${endUserType})`, fullData, color, undefined);
+  };
+
+  // Get bifurcation segment names for stacked bar charts
+  const getBifurcationSegmentNames = () => {
+    const allNames = new Set<string>();
+    if (marketData.endUserByAircraftType) {
+      Object.values(marketData.endUserByAircraftType).forEach(segments => {
+        segments.forEach(seg => allNames.add(seg.name));
+      });
+    }
+    return Array.from(allNames);
   };
 
   return (
@@ -139,6 +157,12 @@ export function SegmentDetailTab({ segmentType, segmentData, totalMarket, market
       {segmentType === "aircraft" && aircraftByRegionData.length > 0 && aircraftByRegionData.some(d => d.total > 0) && (
         <StackedBarChart data={aircraftByRegionData} year={selectedYear} title="Resin Type by Region" subtitle={`${selectedYear} breakdown`}
           segmentColors={CHART_COLORS} segmentNames={regionNames} onSegmentClick={handleStackedBarClick} useMillions={useMillions} />
+      )}
+
+      {/* Bifurcation charts for Resin Type tab */}
+      {segmentType === "aircraft" && bifurcationData.length > 0 && bifurcationData.some(d => d.total > 0) && (
+        <StackedBarChart data={bifurcationData.filter(d => d.total > 0)} year={selectedYear} title="Resin Type Bifurcation" subtitle={`${selectedYear} — Thermoset & Thermoplastic sub-type breakdown`}
+          segmentColors={CHART_COLORS} segmentNames={getBifurcationSegmentNames()} onSegmentClick={handleStackedBarClick} useMillions={useMillions} />
       )}
 
       {segmentType === "application" && applicationByRegionData.length > 0 && applicationByRegionData.some(d => d.total > 0) && (
