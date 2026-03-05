@@ -17,9 +17,9 @@ export interface UnitConfig {
 }
 
 export const VALUE_UNIT: UnitConfig = { prefix: "$", suffix: "M", decimals: 1, label: "US$ Million" };
-export const VOLUME_UNIT: UnitConfig = { prefix: "", suffix: " MLbs", decimals: 2, label: "Million Lbs" };
+export const WEIGHT_UNIT: UnitConfig = { prefix: "", suffix: " MLbs", decimals: 2, label: "Million Lbs" };
 
-export type UnitMode = "value" | "volume";
+export type UnitMode = "value" | "weight";
 
 export const UnitContext = createContext<UnitConfig>(VALUE_UNIT);
 export const useUnit = () => useContext(UnitContext);
