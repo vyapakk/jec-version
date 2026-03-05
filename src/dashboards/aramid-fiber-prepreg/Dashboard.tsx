@@ -1,16 +1,16 @@
 /**
  * Main Dashboard Page — Aramid Fiber Prepreg Market (Favourite-Dual Style).
- * Dual unit toggle: Value (US$ Million) / Volume (Million Lbs).
+ * Dual unit toggle: Value (US$ Million) / Weight (Million Lbs).
  */
 
 import { useState } from "react";
-import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
+import { AlertCircle, RefreshCw, ArrowLeft, DollarSign, Weight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import AppFooter from "@/components/AppFooter";
 
 import { config, TabType } from "./config";
-import { useDualMarketData, UnitContext, VALUE_UNIT, VOLUME_UNIT, UnitMode } from "./data";
+import { useDualMarketData, UnitContext, VALUE_UNIT, WEIGHT_UNIT, UnitMode } from "./data";
 import { DashboardHeader, DashboardSkeleton, ScrollToTop, MainNavigation } from "./layout";
 import { MarketOverviewTab } from "./MarketOverviewTab";
 import { SegmentDetailTab } from "./SegmentDetailTab";
@@ -22,7 +22,7 @@ const AramidFiberPrepregDashboard = () => {
   const [unitMode, setUnitMode] = useState<UnitMode>("value");
   const { valueData, volumeData, isLoading, error, refetch } = useDualMarketData(config.dataUrl);
 
-  const currentUnit = unitMode === "value" ? VALUE_UNIT : VOLUME_UNIT;
+  const currentUnit = unitMode === "value" ? VALUE_UNIT : WEIGHT_UNIT;
   const marketData = unitMode === "value" ? valueData : volumeData;
 
   const footerUnit = unitMode === "value"
@@ -73,22 +73,40 @@ const AramidFiberPrepregDashboard = () => {
         <DashboardHeader title={config.title} subtitle={config.subtitle} />
 
         <main className="container mx-auto px-4 py-8">
-          <Button variant="ghost" onClick={() => navigate(config.backPath)} className="mb-4 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="mr-2 h-4 w-4" /> {config.backLabel}
-          </Button>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <Button variant="ghost" onClick={() => navigate(config.backPath)} className="text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="mr-2 h-4 w-4" /> {config.backLabel}
+            </Button>
+
+            {/* Unit Toggle */}
+            <div className="flex items-center rounded-lg border border-border bg-secondary/50 p-0.5">
+              <button
+                onClick={() => setUnitMode("value")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
+                  unitMode === "value"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <DollarSign className="h-3.5 w-3.5" />
+                <span>Value (US$ M)</span>
+              </button>
+              <button
+                onClick={() => setUnitMode("weight")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
+                  unitMode === "weight"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Weight className="h-3.5 w-3.5" />
+                <span>Weight (M Lbs)</span>
+              </button>
+            </div>
+          </div>
 
           <div className="mb-8">
-            <MainNavigation
-              value={activeTab}
-              onChange={setActiveTab}
-              selectedYear={selectedYear}
-              onYearChange={setSelectedYear}
-              showYearSelector
-              tabs={config.tabs}
-              years={marketData.years}
-              unitMode={unitMode}
-              onUnitChange={setUnitMode}
-            />
+            <MainNavigation value={activeTab} onChange={setActiveTab} selectedYear={selectedYear} onYearChange={setSelectedYear} showYearSelector tabs={config.tabs} years={marketData.years} />
           </div>
 
           {renderTabContent()}

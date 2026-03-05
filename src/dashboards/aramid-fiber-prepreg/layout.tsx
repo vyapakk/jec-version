@@ -5,14 +5,12 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, DollarSign, Weight } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import stratviewLogoWhite from "@/assets/stratview-logo-white.png";
 import type { TabType, TabConfig } from "./config";
-import type { UnitMode } from "./data";
 
 // ── DashboardHeader ───────────────────────────────────────────
 
@@ -103,28 +101,6 @@ export function ScrollToTop() {
   );
 }
 
-// ── UnitToggle ────────────────────────────────────────────────
-
-interface UnitToggleProps {
-  unitMode: UnitMode;
-  onUnitChange: (mode: UnitMode) => void;
-}
-
-export function UnitToggle({ unitMode, onUnitChange }: UnitToggleProps) {
-  return (
-    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-1 rounded-lg border border-border bg-secondary/50 p-1" data-download-exclude>
-      <Button variant="ghost" size="sm" onClick={() => onUnitChange("value")}
-        className={`h-8 px-3 text-xs font-medium gap-1.5 ${unitMode === "value" ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-        <DollarSign className="h-3.5 w-3.5" /> Value
-      </Button>
-      <Button variant="ghost" size="sm" onClick={() => onUnitChange("volume")}
-        className={`h-8 px-3 text-xs font-medium gap-1.5 ${unitMode === "volume" ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-        <Weight className="h-3.5 w-3.5" /> Volume
-      </Button>
-    </motion.div>
-  );
-}
-
 // ── YearSelector ──────────────────────────────────────────────
 
 interface YearSelectorProps {
@@ -162,11 +138,9 @@ interface MainNavigationProps {
   showYearSelector?: boolean;
   tabs: TabConfig[];
   years?: number[];
-  unitMode?: UnitMode;
-  onUnitChange?: (mode: UnitMode) => void;
 }
 
-export function MainNavigation({ value, onChange, selectedYear, onYearChange, showYearSelector = false, tabs, years, unitMode, onUnitChange }: MainNavigationProps) {
+export function MainNavigation({ value, onChange, selectedYear, onYearChange, showYearSelector = false, tabs, years }: MainNavigationProps) {
   return (
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="w-full">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -183,12 +157,9 @@ export function MainNavigation({ value, onChange, selectedYear, onYearChange, sh
             })}
           </TabsList>
         </Tabs>
-        <div className="flex items-center gap-3">
-          {unitMode && onUnitChange && <UnitToggle unitMode={unitMode} onUnitChange={onUnitChange} />}
-          {showYearSelector && selectedYear && onYearChange && (
-            <YearSelector value={selectedYear} onChange={onYearChange} years={years} />
-          )}
-        </div>
+        {showYearSelector && selectedYear && onYearChange && (
+          <YearSelector value={selectedYear} onChange={onYearChange} years={years} />
+        )}
       </div>
     </motion.div>
   );

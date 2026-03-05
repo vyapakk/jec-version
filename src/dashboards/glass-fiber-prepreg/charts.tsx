@@ -653,15 +653,19 @@ export function StackedBarChart({ data, year, title, subtitle, segmentColors, se
       const percent = barTotal > 0 ? ((hoveredEntry.value / barTotal) * 100).toFixed(1) : "0";
       return (
         <div className="max-w-[280px] sm:max-w-xs rounded-lg border border-border bg-popover p-3 sm:p-4 shadow-lg">
-          <p className="mb-2 font-semibold text-foreground text-sm sm:text-base">{label}</p>
-          <div className="flex items-center gap-2 text-xs sm:text-sm">
-            <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: hoveredEntry.color }} />
-            <span className="text-muted-foreground truncate">{hoveredEntry.name}:</span>
-            <span className="font-mono font-medium text-foreground whitespace-nowrap">{fmtVal(hoveredEntry.value, unit)}</span>
+          <p className="font-semibold text-foreground text-sm sm:text-base break-words">{label} - {activeSegment.segmentName} ({year})</p>
+          <div className="mt-2 space-y-2 text-xs sm:text-sm">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="h-3 w-3 rounded-sm flex-shrink-0" style={{ backgroundColor: hoveredEntry.fill || hoveredEntry.color }} />
+              <span className="font-mono font-medium text-foreground">{fmtVal(hoveredEntry.value ?? 0, unit)}</span>
+              <span className="text-muted-foreground">({percent}% of {label})</span>
+            </div>
+            <div className="mt-1 pt-1 border-t border-border flex items-center gap-2 text-muted-foreground">
+              <span>Bar Total:</span>
+              <span className="font-mono font-medium text-foreground">{fmtVal(barTotal, unit)}</span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Share: {percent}%</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Total: {fmtVal(barTotal, unit)}</p>
-          {onSegmentClick && <p className="mt-2 text-xs text-primary flex items-center gap-1"><MousePointer2 className="h-3 w-3" /> Click to drill down</p>}
+          {onSegmentClick && <p className="mt-2 text-xs text-primary">Click to drill down</p>}
         </div>
       );
     }
