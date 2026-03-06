@@ -25,9 +25,7 @@ const App = () => (
       <BrowserRouter>
         <RouteScrollToTop />
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/my-account" element={<MyAccount />} />
           <Route path="/dataset/:datasetId" element={<DatasetDetail />} />
