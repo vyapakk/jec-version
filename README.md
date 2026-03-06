@@ -1,73 +1,130 @@
-# Welcome to your Lovable project
+# Stratview One — Market Intelligence Platform
 
-## Project info
+A React-based market research dashboard platform built with **Vite**, **TypeScript**, **Tailwind CSS**, and **shadcn/ui**.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Tech Stack
 
-## How can I edit this code?
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 18 + TypeScript |
+| Build | Vite |
+| Styling | Tailwind CSS + shadcn/ui |
+| Charts | Recharts |
+| Routing | React Router v6 |
+| State | React Query + React Context |
+| Export | html-to-image (chart PNG downloads) |
 
-There are several ways of editing your application.
+## Project Structure
 
-**Use Lovable**
+```
+src/
+├── App.tsx                     # Route definitions (auto-discovers dashboards)
+├── main.tsx                    # Entry point
+├── index.css                   # Design tokens & global styles
+├── components/                 # Shared UI components
+│   ├── ui/                     # shadcn/ui primitives
+│   ├── LoginForm.tsx           # Authentication form
+│   ├── AccessRequestDialog.tsx # Dataset access request
+│   ├── DashboardHeader.tsx     # Top navigation bar
+│   ├── DatasetList.tsx         # Category/dataset listing
+│   └── ...
+├── dashboards/                 # Self-contained dashboard modules
+│   ├── registry.ts             # Auto-discovery engine
+│   ├── TEMPLATE_README.md      # How to add new dashboards
+│   ├── aircraft-interiors/     # Standard single-unit dashboard
+│   ├── global-prepreg/         # Dual-unit (Value/Weight) dashboard
+│   ├── airbus-combined/        # Excel-based OEM dashboard
+│   ├── boeing-combined/        # Excel-based OEM dashboard
+│   ├── commercial-aircraft/    # Combined OEM portal
+│   └── ...                     # 35+ additional dashboard modules
+├── data/
+│   ├── datasets.ts             # Dataset catalog (auto-merged from registry)
+│   └── dashboardRoutes.ts      # Route map (auto-generated)
+├── pages/                      # Top-level page components
+│   ├── Index.tsx                # Landing / login page
+│   ├── Dashboard.tsx            # Dataset catalog page
+│   ├── DatasetDetail.tsx        # Dataset detail with dashboard links
+│   └── ...
+└── hooks/                      # Shared hooks
+    ├── use-mobile.tsx
+    └── use-toast.ts
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+public/
+└── data/                       # Static JSON + Excel data files
 ```
 
-**Edit a file directly in GitHub**
+## Dashboard Architecture
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Each dashboard is a **standalone module** in `src/dashboards/<name>/` with zero cross-dashboard dependencies:
 
-**Use GitHub Codespaces**
+| File | Purpose |
+|------|---------|
+| `config.ts` | Settings, tabs, routing, catalog registration |
+| `Dashboard.tsx` | Main page component |
+| `data.ts` | Types, data fetching hooks, utilities |
+| `charts.tsx` | Chart components (Recharts wrappers) |
+| `layout.tsx` | Header, navigation, loading skeleton |
+| `ui-helpers.tsx` | KPI cards, counters, formatting |
+| `MarketOverviewTab.tsx` | Overview tab |
+| `SegmentDetailTab.tsx` | Segment breakdown tabs |
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Adding a new dashboard
 
-## What technologies are used for this project?
+1. Copy an existing dashboard folder
+2. Edit `config.ts` (data URL, title, tabs, route, catalog)
+3. Add the JSON data file to `public/data/`
+4. Done — auto-discovered at build time
 
-This project is built with:
+See `src/dashboards/TEMPLATE_README.md` for full instructions.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Dashboard Styles
 
-## How can I deploy this project?
+| Style | Unit Toggle | Data Format | Example |
+|-------|------------|-------------|---------|
+| **Standard** | No | Single JSON object | Aircraft Interiors |
+| **Dual (Favourite)** | Value / Weight | `{ value: {...}, weight: {...} }` | Global Prepreg, Carbon Fiber Prepreg |
+| **OEM / Excel** | No | `.xlsx` files | Airbus, Boeing |
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Data Format
 
-## Can I connect a custom domain to my Lovable project?
+### Standard (single-unit) JSON
+```json
+{
+  "years": [2019, 2020, ...],
+  "totalMarket": [100, 110, ...],
+  "endUser": { "OE": [...], "Aftermarket": [...] },
+  "region": { "North America": [...], ... },
+  ...
+}
+```
 
-Yes, you can!
+### Dual-unit JSON
+```json
+{
+  "years": [2014, 2015, ...],
+  "value": { "totalMarket": [...], "endUser": {...}, ... },
+  "weight": { "totalMarket": [...], "endUser": {...}, ... }
+}
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Development
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```bash
+npm install
+npm run dev        # Start dev server
+npm run build      # Production build
+npm run preview    # Preview production build
+```
+
+## Backend Integration
+
+See [INTEGRATION.md](./INTEGRATION.md) for the complete API contract, endpoint specifications, and data schemas needed to replace static data with a live backend.
+
+## Key Integration Points
+
+Search the codebase for `BACKEND INTEGRATION POINT` to find every placeholder:
+
+- **Authentication**: `LoginForm.tsx`, `SignUp.tsx`, `ForgotPassword.tsx`
+- **Dataset catalog**: `datasets.ts` (replace static array with API)
+- **Market data**: Each dashboard's `data.ts` (replace `fetch(dataUrl)` with API)
+- **Access requests**: `AccessRequestDialog.tsx`
