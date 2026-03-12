@@ -15,9 +15,9 @@ const WelcomeSection = () => {
         <div className="absolute bottom-10 right-10 w-48 h-48 rounded-full bg-primary blur-3xl" />
       </div>
 
-      <div className="container relative z-10 px-0">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left">
+      <div className="container relative z-10">
+        <div className="flex flex-col items-center md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex-1 min-w-0 space-y-2 text-center md:text-left">
             <h1 className="text-2xl md:text-3xl font-bold text-primary-foreground font-display">
               Welcome back, John
             </h1>
@@ -27,7 +27,7 @@ const WelcomeSection = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 md:flex md:gap-6 w-full md:w-auto">
+          <div className="md:shrink-0 grid grid-cols-3 gap-3 md:flex md:gap-6 w-full md:w-auto">
             {stats.map((stat) => (
               <div
                 key={stat.label}
